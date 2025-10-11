@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>My Blog Application</title>
+    <style>
+        :root { --gap: 24px; --muted:#666; --border:#ddd; }
+        body { font-family: system-ui, Arial, sans-serif; margin: 32px; }
+        header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 24px; }
+        h1 { margin:0; font-size: 36px; }
+        .grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: var(--gap);
+        }
+        .card {
+          border: 1px solid var(--border);
+          padding: 16px;
+          border-radius: 6px;
+          background: #fff;
+        }
+        .meta { color: var(--muted); font-size: 0.9rem; margin: 6px 0 10px; }
+        .excerpt { margin: 8px 0 0; line-height: 1.4; }
+        .card a { color: inherit; text-decoration: none; }
+        .card a:hover { text-decoration: underline; }
+        .toolbar { display:flex; gap:12px; align-items:center; }
+        .toolbar input { padding:8px 10px; width:280px; }
+        .toolbar select { padding:8px 10px; }
+        .pager { display:flex; justify-content:space-between; margin-top: 24px; color:#333; }
+    </style>
+</head>
+<body>
+<header>
+    <h1>My Blog Application</h1>
+    <div class="toolbar">
+        <input type="search" placeholder="Search" disabled />
+        <select disabled><option>Filter</option></select>
+        <select disabled><option>Sort</option></select>
+        <a href="#" style="margin-left:12px;">Login</a>
+    </div>
+</header>
+
+<div class="grid">
+    <div th:each="p : ${posts}" class="card">
+        <a th:href="@{'/post/' + ${p.id}}">
+            <h2 th:text="${p.title}">Title</h2>
+        </a>
+        <div class="meta">
+            <span th:text="${p.author}">Author</span>,
+            <span th:text="${#temporals.format(p.createdAt, 'dd/MM/yyyy')}">18/08/2020</span>
+        </div>
+        <p class="excerpt" th:text="${p.excerpt}">Short excerpt...</p>
+    </div>
+</div>
+
+<div class="pager">
+    <span>&lt; Previous</span>
+    <span>Next &gt;</span>
+</div>
+</body>
+</html>
