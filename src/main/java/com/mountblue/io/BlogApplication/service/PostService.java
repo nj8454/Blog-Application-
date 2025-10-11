@@ -12,7 +12,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
@@ -39,8 +38,12 @@ public class PostService {
         Post saved = postRepo.save(post);
     }
 
-    @Transactional(readOnly = true)
-    public List<PostListItems> getPosts() {
+    public void deletePost(Long postId){
+        postRepo.deleteById(postId);
+    }
+
+//    @Transactional(readOnly = true)
+    public List<PostListItems> getPostList() {
         return postRepo.findAll()
                 .stream()
                 .map(p -> new PostListItems(
@@ -54,7 +57,7 @@ public class PostService {
                 .toList();
     }
 
-    @Transactional(readOnly = true)
+//    @Transactional(readOnly = true)
     public PostDetailView detail(Long id) {
         // This calls the @EntityGraph method so tags are fetched eagerly with the Post
         Post p = postRepo.findById(id).orElseThrow();
@@ -66,5 +69,20 @@ public class PostService {
                 p.getCreatedAt(),
                 p.getTags().stream().map(t -> t.getName()).toList()
         );
+    }
+
+    public void editPost(Long id, PostDetailView updatedPost) {
+        Post oldPost = postRepo.findById(id).orElseThrow();
+
+        oldPost.setAuthor(updatedPost.author());
+        oldPost.setTitle(updatedPost.title());
+        oldPost.setContent(updatedPost.content());
+        oldPost.setExcerpt(updatedPost.content().substring(0, 200));
+
+        String tagsAsString = String.join(",", updatedPost.tags());
+        Set<Tag> tags = tagService.saveTags(tagsAsString);
+        oldPost.setTags(tags);
+
+        postRepo.save(oldPost);
     }
 }
