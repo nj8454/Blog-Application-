@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="${post.title}">Post</title>
+    <style>
+        body { font-family: system-ui, Arial, sans-serif; margin: 32px; max-width: 900px; }
+        a { text-decoration:none; color:#06c; }
+        a:hover { text-decoration:underline; }
+        .meta { color:#666; margin: 8px 0 16px; }
+        .tags { margin-top: 12px; color:#0a7; }
+        .content { line-height: 1.6; margin-top: 16px; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+<p><a th:href="@{'/post'}">← All Posts</a></p>
+<h1 th:text="${post.title}">Title</h1>
+<div class="meta">
+    <span th:text="${post.author}">Author</span>,
+    <span th:text="${#temporals.format(post.createdAt, 'dd/MM/yyyy HH:mm')}">Date</span>
+</div>
+<div class="content" th:text="${post.content}">Full content...</div>
+<div class="tags" th:if="${post.tags}">
+    Tags:
+    <span th:text="${#strings.listJoin(post.tags, ', ')}">tag1, tag2</span>
+</div>
+
+<form th:action="@{|/post/${post.id}/update|}" method="get" style="margin-top:12px;">
+    <button type="submit">
+        Update
+    </button>
+</form>
+
+<form th:action="@{|/post/${post.id}/delete|}" method="post" style="margin-top:12px;">
+    <button type="submit" onclick="return confirm('Delete this post?');">
+        Delete
+    </button>
+</form>
+
+
+<section style="margin-top:32px;">
+    <h2>Comments</h2>
+
+    <div th:if="${#lists.isEmpty(comments)}" style="color:#666;margin-bottom:10px;">
+        No comments yet — be the first to comment.
+    </div>
+
+    <div th:each="c : ${comments}" style="border-top:1px solid #eee;padding:12px 0;">
+        <div style="font-weight:600;" th:text="${c.name}">Name</div>
+        <div style="color:#666;font-size:.9rem;"
+             th:text="${#temporals.format(c.createdAt, 'dd/MM/yyyy HH:mm')}">Date</div>
+        <p style="margin:6px 0 0;" th:text="${c.text}">Comment text...</p>
+    </div>
+</section>
+<section style="margin-top:24px;">
+    <h3>Add a comment</h3>
+    <form th:action="@{|/post/${post.id}/comments|}" method="post" th:object="${comment}">
+        <div>
+            <label>Name</label>
+            <input type="text" th:field="*{name}" placeholder="Name" required />
+        </div>
+
+        <div>
+            <label>Email</label>
+            <input type="email" th:field="*{email}" placeholder="Email" required />
+        </div>
+
+        <div>
+            <label>Comment</label>
+            <textarea rows="4" th:field="*{text}" placeholder="Comment" required></textarea>
+        </div>
+
+        <button type="submit">Post Comment</button>
+    </form>
+</section>
+</body>
+</html>

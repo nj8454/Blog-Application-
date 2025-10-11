@@ -15,6 +15,7 @@ public class PostController {
 
     @Autowired
     private PostService postService;
+    @Autowired
     private CommentService commentService;
 
     @GetMapping("/create")
@@ -39,14 +40,32 @@ public class PostController {
     public String detail(@PathVariable Long id, Model model) {
         model.addAttribute("post", postService.detail(id));
         model.addAttribute("comments", commentService.getComments(id));
+        model.addAttribute("comment", new CommentModel.CommentCreateRequest("", "", ""));
         return "post-details";
     }
 
-    @PostMapping("/comment")
+    @PostMapping("/{id}/comments")
     public String createComment(@PathVariable Long id,
                                 @ModelAttribute("comment")CommentModel.CommentCreateRequest newComment){
         commentService.addComment(id, newComment);
-        return "redirect:/posts/" + id;
+        return "redirect:/post/" + id;
+    }
+
+    @GetMapping("/{id}/update")
+    public String showUpdateForm(Model model){
+        model.addAttribute("post", new PostDto());
+        return "post-edit";
+    }
+
+    @PostMapping("/id/update")
+    public String updatePost(@PathVariable Long id,
+                             @ModelAttribute("post") PostDto updatedPost){
+        postService.editPost(id, updatedPost);
+    }
+    @PostMapping("/{id}/delete")
+    public String deletePost(@PathVariable Long id){
+        postService.deletePost(id);
+        return "redirect:/post";
     }
 
 }
