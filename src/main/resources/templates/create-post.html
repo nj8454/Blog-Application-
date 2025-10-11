@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Post</title>
+    <style>
+        body { font-family: sans-serif; max-width: 720px; margin: 24px auto; padding: 0 12px; }
+        form { display: grid; gap: 12px; }
+        input[type=text], textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
+        button { padding: 10px 14px; border: none; background: #2a6; color: #fff; border-radius: 6px; cursor: pointer; }
+        .alert { padding: 10px; background: #e8f8ee; border: 1px solid #9cd3b5; border-radius: 6px; color: #155b36; }
+    </style>
+</head>
+<body>
+<h2>Create Post</h2>
+
+<div th:if="${param.success}" class="alert">Post created successfully.</div>
+
+<form th:action="@{/post/save}" th:object="${post}" method="post">
+    <label>Title</label>
+    <input type="text" th:field="*{title}" placeholder="Enter title" required>
+
+    <label>Author</label>
+    <input type="text" th:field="*{author}" placeholder="Enter author" required>
+
+    <label>Content</label>
+    <textarea th:field="*{content}" rows="6" placeholder="Write content..." required></textarea>
+
+    <label>Tags</label>
+    <input type="text" th:field="*{tag}" placeholder="e.g. java, spring, web">
+
+    <button type="submit">Create</button>
+</form>
+</body>
+</html>

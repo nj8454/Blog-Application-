@@ -1,10 +1,7 @@
 package com.mountblue.io.BlogApplication.entities;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -12,7 +9,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Data
+@Getter @Setter
+@ToString(exclude = {"tags", "comments", "user"})
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -74,4 +72,13 @@ public class Post {
         this.updatedAt = LocalDateTime.now();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Post other = (Post) o;
+        return id != null && id.equals(other.id);
+    }
+    @Override
+    public int hashCode() { return getClass().hashCode(); }
 }

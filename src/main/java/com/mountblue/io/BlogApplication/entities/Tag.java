@@ -1,16 +1,14 @@
 package com.mountblue.io.BlogApplication.entities;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-@Data
+@Getter @Setter
+@ToString(exclude = "posts")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -20,7 +18,7 @@ public class Tag {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "tag_id")
-    private long id;
+    private Long id;
 
     private String name;
 
@@ -46,5 +44,15 @@ public class Tag {
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Tag other = (Tag) o;
+        return id != null && id.equals(other.id);
+    }
+    @Override
+    public int hashCode() { return getClass().hashCode(); }
 
 }
