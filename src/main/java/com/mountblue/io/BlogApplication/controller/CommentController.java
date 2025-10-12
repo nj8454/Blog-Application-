@@ -33,4 +33,14 @@ public class CommentController {
 
         return "redirect:/post/"+ postId;
     }
+
+    @PostMapping("/{commentId}/delete")
+    public String removeComment(@PathVariable("postId") Long postId
+            , @PathVariable("commentId") Long commentId
+            , @ModelAttribute("comment")CommentModel.CommentItem newComment){
+
+        commentService.deleteComment(commentId);
+
+        return "redirect:/post/"+ postId;
+    }
 }

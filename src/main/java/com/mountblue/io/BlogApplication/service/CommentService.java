@@ -83,4 +83,8 @@ public class CommentService {
         commentRepo.save(comment);
 
     }
+
+    public void deleteComment(Long commentId){
+        commentRepo.deleteById(commentId);
+    }
 }
