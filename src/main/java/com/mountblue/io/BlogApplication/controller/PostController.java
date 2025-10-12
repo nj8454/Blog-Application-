@@ -1,6 +1,7 @@
 package com.mountblue.io.BlogApplication.controller;
 
 import com.mountblue.io.BlogApplication.dto.CommentModel;
+import com.mountblue.io.BlogApplication.dto.PostDetailView;
 import com.mountblue.io.BlogApplication.dto.PostDto;
 import com.mountblue.io.BlogApplication.service.CommentService;
 import com.mountblue.io.BlogApplication.service.PostService;
@@ -32,14 +33,14 @@ public class PostController {
 
     @GetMapping
     public String getAllPost(Model model){
-        model.addAttribute("posts", postService.getPosts());
+        model.addAttribute("posts", postService.getPostList());
         return "all-posts";
     }
 
     @GetMapping("/{id}")
     public String detail(@PathVariable Long id, Model model) {
         model.addAttribute("post", postService.detail(id));
-        model.addAttribute("comments", commentService.getComments(id));
+        model.addAttribute("comments", commentService.getCommentsList(id));
         model.addAttribute("comment", new CommentModel.CommentCreateRequest("", "", ""));
         return "post-details";
     }
@@ -52,16 +53,19 @@ public class PostController {
     }
 
     @GetMapping("/{id}/update")
-    public String showUpdateForm(Model model){
-        model.addAttribute("post", new PostDto());
+    public String showUpdateForm(@PathVariable Long id, Model model){
+        PostDetailView previousPost = postService.detail(id);
+        model.addAttribute("post", previousPost);
         return "post-edit";
     }
 
-    @PostMapping("/id/update")
+    @PostMapping("/{id}/update")
     public String updatePost(@PathVariable Long id,
-                             @ModelAttribute("post") PostDto updatedPost){
+                             @ModelAttribute("post") PostDetailView updatedPost){
         postService.editPost(id, updatedPost);
+        return "redirect:/post/" + id;
     }
+
     @PostMapping("/{id}/delete")
     public String deletePost(@PathVariable Long id){
         postService.deletePost(id);

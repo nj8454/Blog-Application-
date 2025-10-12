@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Data
 @RequiredArgsConstructor
@@ -37,11 +36,14 @@ public class CommentService {
         commentRepo.save(comment);
     }
 
-    public List<CommentModel.CommentItem> getComments(Long postId) {
-        List<Comment> comments = commentRepo.findAllById(postId);
+    public List<CommentModel.CommentItem> getCommentsList(Long postId) {
+        List<Comment> comments = commentRepo.findAllByPostId(postId);
+
         List<CommentModel.CommentItem> commentItemList = new ArrayList<>();
 
         for(Comment tempComment: comments) {
+            System.out.println(postId);
+            System.out.println(tempComment.getComment());
             CommentModel.CommentItem commentDetail = new CommentModel.CommentItem(
                     tempComment.getId(),
                     tempComment.getName(),
@@ -53,5 +55,32 @@ public class CommentService {
         }
 
         return commentItemList;
+    }
+
+    public CommentModel.CommentItem getComment(Long commnetId) {
+        Comment comment = commentRepo.getReferenceById(commnetId);
+
+        CommentModel.CommentItem tempComment = new CommentModel.CommentItem(
+                comment.getId(),
+                comment.getName(),
+                comment.getEmail(),
+                comment.getComment(),
+                comment.getCreatedAt()
+        );
+
+        return tempComment;
+    }
+
+    public void editComment(Long postId, CommentModel.CommentItem newComment) {
+        Post post = postRepo.findById(postId).orElseThrow();
+
+        Comment comment = commentRepo.findById(postId).orElseThrow();
+
+        comment.setComment(newComment.text());
+        comment.setName(newComment.name());
+        comment.setEmail(newComment.email());
+
+        commentRepo.save(comment);
+
     }
 }
