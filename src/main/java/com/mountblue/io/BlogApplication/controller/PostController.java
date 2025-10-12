@@ -5,6 +5,7 @@ import com.mountblue.io.BlogApplication.dto.PostDetailView;
 import com.mountblue.io.BlogApplication.dto.PostDto;
 import com.mountblue.io.BlogApplication.service.CommentService;
 import com.mountblue.io.BlogApplication.service.PostService;
+import com.mountblue.io.BlogApplication.service.TagService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,6 +19,8 @@ public class PostController {
     private PostService postService;
     @Autowired
     private CommentService commentService;
+    @Autowired
+    private TagService tagService;
 
     @GetMapping("/create")
     public String showCreateForm(Model model) {
@@ -31,17 +34,29 @@ public class PostController {
         return "redirect:/post/create?success";
     }
 
-    @GetMapping
-    public String getAllPost(Model model){
-        model.addAttribute("posts", postService.getPostList());
+    @GetMapping({"", "/search"})
+    public String getAllPost(@RequestParam(name = "key", required = false) String key, Model model){
+        
+        if(key!=null){
+//            key=key.trim();
+            model.addAttribute("posts", postService.searchPost(key));
+            model.addAttribute("key", key);
+            model.addAttribute("authors", postService.getAuthors());
+            model.addAttribute("allTags", tagService.getTags());
+        }
+        else {
+            model.addAttribute("posts", postService.getPostList());
+        }
         return "all-posts";
     }
+
 
     @GetMapping("/{id}")
     public String detail(@PathVariable Long id, Model model) {
         model.addAttribute("post", postService.detail(id));
         model.addAttribute("comments", commentService.getCommentsList(id));
         model.addAttribute("comment", new CommentModel.CommentCreateRequest("", "", ""));
+
         return "post-details";
     }
 
@@ -71,6 +86,7 @@ public class PostController {
         postService.deletePost(id);
         return "redirect:/post";
     }
+
 
 }
 

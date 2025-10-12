@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -84,5 +85,30 @@ public class PostService {
         oldPost.setTags(tags);
 
         postRepo.save(oldPost);
+    }
+
+    public List<PostListItems> searchPost(String key) {
+        return postRepo.findDistinctByAuthorContainingOrTitleContainingOrContentContainingOrTags_NameContaining
+                        (key, key, key, key).stream()
+                        .map(p -> new PostListItems(
+                        p.getId(),
+                        p.getTitle(),
+                        p.getAuthor(),
+                        p.getExcerpt(),
+                        p.getCreatedAt(),
+                        p.getTags().stream().map(t -> t.getName()).toList()
+                ))
+                .toList();
+    }
+
+    public List<String> getAuthors() {
+       List<Post> posts = postRepo.findAll();
+       List<String> authors = new ArrayList<>();
+       for(Post post: posts){
+           String authorName = post.getAuthor();
+           authors.add(authorName);
+       }
+
+       return authors;
     }
 }

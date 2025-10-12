@@ -34,9 +34,38 @@
 <header>
     <h1>My Blog Application</h1>
     <div class="toolbar">
-        <input type="search" placeholder="Search" disabled />
-        <select disabled><option>Filter</option></select>
-        <select disabled><option>Sort</option></select>
+        <form th:action="@{/post/search}" method="get" style="display:inline-flex; gap:8px;">
+            <input type="search" name="key" placeholder="Search" th:value="${key}"/>
+            <button type="submit">Search</button>
+        </form>
+        <form th:action="@{/post/search/filter" method="get" style="display:inline-flex; gap:4px;"
+              th:attr="disabled=${key == null or #strings.isEmpty(key)} ? 'disabled' : null">
+            <!-- keep the search term when filtering -->
+            <input type="hidden" name="key" th:value="${key}"/>
+
+            <!-- example filter controls -->
+            <select name="author"
+                    th:attr="disabled=${key == null or #strings.isEmpty(key)} ? 'disabled' : null">
+                <option value="">Author (any)</option>
+                <option th:each="a : ${authors}" th:value="${a}" th:text="${a}">Author</option>
+            </select>
+
+            <input type="datetime-local" name="from"
+                   th:attr="disabled=${key == null or #strings.isEmpty(key)} ? 'disabled' : null"/>
+            <input type="datetime-local" name="to"
+                   th:attr="disabled=${key == null or #strings.isEmpty(key)} ? 'disabled' : null"/>
+
+            <select name="tags" multiple
+                    th:attr="disabled=${key == null or #strings.isEmpty(key)} ? 'disabled' : null">
+                <option th:each="t : ${allTags}" th:value="${t}" th:text="${t}">tag</option>
+            </select>
+
+            <button type="submit"
+                    th:attr="disabled=${key == null or #strings.isEmpty(key)} ? 'disabled' : null">
+                Apply
+            </button>
+        </form>
+            <select disabled><option>Sort</option></select>
         <a href="#" style="margin-left:12px;">Login</a>
     </div>
 </header>
