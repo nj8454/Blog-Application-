@@ -11,10 +11,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @Data
@@ -39,14 +44,13 @@ public class PostService {
         Post saved = postRepo.save(post);
     }
 
-    public void deletePost(Long postId){
+    public void deletePost(Long postId) {
         postRepo.deleteById(postId);
     }
 
-//    @Transactional(readOnly = true)
-    public List<PostListItems> getPostList() {
-        return postRepo.findAll()
-                .stream()
+    //    @Transactional(readOnly = true)
+    public Page<PostListItems> getPostList(Pageable pageable) {
+        return postRepo.findAll(pageable)
                 .map(p -> new PostListItems(
                         p.getId(),
                         p.getTitle(),
@@ -54,11 +58,10 @@ public class PostService {
                         p.getExcerpt(),
                         p.getCreatedAt(),
                         p.getTags().stream().map(t -> t.getName()).toList()
-                ))
-                .toList();
+                ));
     }
 
-//    @Transactional(readOnly = true)
+    //    @Transactional(readOnly = true)
     public PostDetailView detail(Long id) {
         // This calls the @EntityGraph method so tags are fetched eagerly with the Post
         Post p = postRepo.findById(id).orElseThrow();
@@ -87,28 +90,49 @@ public class PostService {
         postRepo.save(oldPost);
     }
 
-    public List<PostListItems> searchPost(String key) {
-        return postRepo.findDistinctByAuthorContainingOrTitleContainingOrContentContainingOrTags_NameContaining
-                        (key, key, key, key).stream()
-                        .map(p -> new PostListItems(
+    public Page<PostListItems> searchPost(String key, Pageable pageable) {
+        return
+                postRepo.findDistinctByAuthorContainingIgnoreCaseOrTitleContainingIgnoreCaseOrContentContainingIgnoreCaseOrTags_NameContainingIgnoreCase
+                        (key, key, key, key, pageable).map(p -> new PostListItems(
                         p.getId(),
                         p.getTitle(),
                         p.getAuthor(),
                         p.getExcerpt(),
                         p.getCreatedAt(),
                         p.getTags().stream().map(t -> t.getName()).toList()
-                ))
-                .toList();
+                ));
     }
 
     public List<String> getAuthors() {
-       List<Post> posts = postRepo.findAll();
-       List<String> authors = new ArrayList<>();
-       for(Post post: posts){
-           String authorName = post.getAuthor();
-           authors.add(authorName);
-       }
+        List<Post> posts = postRepo.findAll();
+        List<String> authors = new ArrayList<>();
+        for (Post post : posts) {
+            String authorName = post.getAuthor();
+            authors.add(authorName);
+        }
 
-       return authors;
+        return authors;
+    }
+
+    public Page<PostListItems> searchWithFilter(String keyword, List<String> selectedTags, String author, LocalDateTime from, LocalDateTime to, Pageable pageable) {
+        boolean hasTags = true;
+        if (selectedTags == null) {
+            selectedTags = new ArrayList<>();
+            hasTags = false;
+        }
+        return postRepo.searchAndFilter(keyword,
+                        author,
+                        from,
+                        to,
+                        hasTags,
+                        selectedTags, pageable)
+                .map(p -> new PostListItems(
+                        p.getId(),
+                        p.getTitle(),
+                        p.getAuthor(),
+                        p.getExcerpt(),
+                        p.getCreatedAt(),
+                        p.getTags().stream().map(t -> t.getName()).toList()
+                ));
     }
 }

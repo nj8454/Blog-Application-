@@ -8,64 +8,107 @@
         body { font-family: system-ui, Arial, sans-serif; margin: 32px; }
         header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 24px; }
         h1 { margin:0; font-size: 36px; }
-        .grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: var(--gap);
-        }
-        .card {
-          border: 1px solid var(--border);
-          padding: 16px;
-          border-radius: 6px;
-          background: #fff;
-        }
+
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--gap); }
+        .card { border: 1px solid var(--border); padding: 16px; border-radius: 6px; background: #fff; }
         .meta { color: var(--muted); font-size: 0.9rem; margin: 6px 0 10px; }
         .tags { margin-top: 12px; color:#0a7; }
         .excerpt { margin: 8px 0 0; line-height: 1.4; }
         .card a { color: inherit; text-decoration: none; }
         .card a:hover { text-decoration: underline; }
-        .toolbar { display:flex; gap:12px; align-items:center; }
-        .toolbar input { padding:8px 10px; width:280px; }
+
+        .toolbar { display:flex; gap:6px; align-items:center; }
+        .toolbar input { padding:8px 10px; width:60px; }
         .toolbar select { padding:8px 10px; }
+
         .pager { display:flex; justify-content:space-between; margin-top: 24px; color:#333; }
+
+        /* search bar */
+        .searchbar { display:inline-flex; align-items:center; gap:6px; }
+        .searchbar input[type="search"] {
+            padding:8px 10px; width:260px;
+            border:1px solid var(--border); border-radius:8px;
+        }
+        .searchbar button {
+            padding:8px 12px;
+            border:1px solid var(--border); border-radius:8px; background:#fff; cursor:pointer;
+        }
+        .searchbar button:hover { background:#f5f5f5; }
+
+        /* CSS-only dropdown for tag checkboxes */
+        .dropdown { position:relative; display:inline-block; }
+        .dropdown-toggle {
+            padding:4px 6px; border:1px solid var(--border); border-radius:8px; background:#fff; cursor:pointer;
+        }
+        /* checkbox hack */
+        #tags-dd-toggle { position:absolute; opacity:0; pointer-events:none; }
+        .dropdown-menu {
+            position:absolute; top:110%; left:0; z-index:10;
+            min-width:60px; max-height:150px; overflow:auto;
+            padding:2px; border:1px solid var(--border); border-radius:8px; background:#fff;
+            box-shadow:0 2px 6px rgba(0,0,0,.08);
+            display:none;
+        }
+        #tags-dd-toggle:checked + label + .dropdown-menu { display:block; }
+        .checkbox-row { display:flex; align-items:center; gap:2px; margin:4px 0; }
+        .dd-actions { display:flex; gap:2px; justify-content:flex-end; margin-top:2px; }
+        .dd-actions button {
+            padding:2px 4px; border:1px solid var(--border); border-radius:8px; background:#fff; cursor:pointer;
+        }
+        .dd-actions button:hover { background:#f5f5f5; }
+
+        /* disable whole filters row when no key */
+        .filters-disabled { opacity:.6; pointer-events:none; }
     </style>
 </head>
 <body>
 <header>
     <h1>My Blog Application</h1>
     <div class="toolbar">
-        <form th:action="@{/post/search}" method="get" style="display:inline-flex; gap:8px;">
+        <form th:action="@{/post/search}" method="get" class="searchbar">
             <input type="search" name="key" placeholder="Search" th:value="${key}"/>
             <button type="submit">Search</button>
         </form>
-        <form th:action="@{/post/search/filter" method="get" style="display:inline-flex; gap:4px;"
-              th:attr="disabled=${key == null or #strings.isEmpty(key)} ? 'disabled' : null">
-            <!-- keep the search term when filtering -->
+
+        <form th:action="@{/post/search/filter}" method="get"
+              style="display:inline-flex; gap:8px; align-items:center;">
             <input type="hidden" name="key" th:value="${key}"/>
 
-            <!-- example filter controls -->
-            <select name="author"
-                    th:attr="disabled=${key == null or #strings.isEmpty(key)} ? 'disabled' : null">
+            <select name="author">
                 <option value="">Author (any)</option>
                 <option th:each="a : ${authors}" th:value="${a}" th:text="${a}">Author</option>
             </select>
 
-            <input type="datetime-local" name="from"
-                   th:attr="disabled=${key == null or #strings.isEmpty(key)} ? 'disabled' : null"/>
-            <input type="datetime-local" name="to"
-                   th:attr="disabled=${key == null or #strings.isEmpty(key)} ? 'disabled' : null"/>
+            <input type="datetime-local" name="from"/>
+            <input type="datetime-local" name="to"/>
 
-            <select name="tags" multiple
-                    th:attr="disabled=${key == null or #strings.isEmpty(key)} ? 'disabled' : null">
-                <option th:each="t : ${allTags}" th:value="${t}" th:text="${t}">tag</option>
-            </select>
+            <!-- CSS-only dropdown with checkboxes -->
+            <div class="dropdown">
+                <input type="checkbox" id="tags-dd-toggle"/>
+                <label for="tags-dd-toggle" class="dropdown-toggle">Tags</label>
+                <div class="dropdown-menu">
+                    <div th:each="t : ${allTags}" class="checkbox-row">
+                        <input type="checkbox"
+                               name="tags"
+                               th:id="${'tag_' + t}"
+                               th:value="${t}"
+                               th:attr="checked=${selectedTags != null and selectedTags.contains(t)} ? 'checked' : null"/>
+                        <label th:for="${'tag_' + t}" th:text="${t}">tag</label>
+                    </div>
+                    <div class="dd-actions">
+                        <!-- Close is CSS-only: uncheck the toggle via a hidden control -->
+                        <label for="tags-dd-toggle" class="dropdown-toggle" style="padding:6px 10px;">Close</label>
+                        <button type="submit">Apply</button>
+                    </div>
+                </div>
+            </div>
 
-            <button type="submit"
-                    th:attr="disabled=${key == null or #strings.isEmpty(key)} ? 'disabled' : null">
-                Apply
-            </button>
+            <button type="submit">Apply</button>
         </form>
-            <select disabled><option>Sort</option></select>
+
+        <select
+            <option>Sort</option>
+        </select>
         <a href="#" style="margin-left:12px;">Login</a>
     </div>
 </header>

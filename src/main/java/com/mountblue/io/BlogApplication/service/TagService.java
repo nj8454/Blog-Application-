@@ -1,14 +1,13 @@
 package com.mountblue.io.BlogApplication.service;
 
+import com.mountblue.io.BlogApplication.entities.Post;
 import com.mountblue.io.BlogApplication.entities.Tag;
 import com.mountblue.io.BlogApplication.repository.TagRepository;
 import lombok.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 @Data
 @RequiredArgsConstructor
@@ -28,5 +27,16 @@ public class TagService {
             tagSet.add(tag);
         }
         return tagSet;
+    }
+
+    public List<String> getTags() {
+        List<Tag> tags = tagRepo.findAll();
+        List<String> tagsname = new ArrayList<>();
+        for(Tag tag: tags){
+            String autorName = tag.getName();
+            tagsname.add(autorName);
+        }
+
+        return tagsname;
     }
 }
