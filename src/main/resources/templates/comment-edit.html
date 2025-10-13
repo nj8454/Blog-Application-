@@ -13,14 +13,14 @@
 <body>
 <h1>Edit Comment</h1>
 
-<form th:action="@{|/post/${postId}/comment/${commentId}/edit|}"
+<form th:action="@{|/post/${postId}/comments/${commentId}/edit|}"
       method="post"
       th:object="${comment}">
     <label>Name</label>
-    <input type="text" th:field="*{name}" required />
+    <input type="text" th:field="*{name}" required/>
 
     <label>Email</label>
-    <input type="email" th:field="*{email}" required />
+    <input type="email" th:field="*{email}" required/>
 
     <label>Comment</label>
     <textarea rows="5" th:field="*{text}" required></textarea>

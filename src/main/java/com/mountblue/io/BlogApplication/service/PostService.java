@@ -17,10 +17,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 @Data
 @NoArgsConstructor
@@ -90,49 +87,52 @@ public class PostService {
         postRepo.save(oldPost);
     }
 
-    public Page<PostListItems> searchPost(String key, Pageable pageable) {
-        return
-                postRepo.findDistinctByAuthorContainingIgnoreCaseOrTitleContainingIgnoreCaseOrContentContainingIgnoreCaseOrTags_NameContainingIgnoreCase
-                        (key, key, key, key, pageable).map(p -> new PostListItems(
-                        p.getId(),
-                        p.getTitle(),
-                        p.getAuthor(),
-                        p.getExcerpt(),
-                        p.getCreatedAt(),
-                        p.getTags().stream().map(t -> t.getName()).toList()
-                ));
-    }
+//    public Page<PostListItems> searchPost(String key, Pageable pageable) {
+//        return
+//                postRepo.findDistinctByAuthorContainingIgnoreCaseOrTitleContainingIgnoreCaseOrContentContainingIgnoreCaseOrTags_NameContainingIgnoreCase
+//                        (key, key, key, key, pageable).map(p -> new PostListItems(
+//                        p.getId(),
+//                        p.getTitle(),
+//                        p.getAuthor(),
+//                        p.getExcerpt(),
+//                        p.getCreatedAt(),
+//                        p.getTags().stream().map(t -> t.getName()).toList()
+//                ));
+//    }
 
-    public List<String> getAuthors() {
+    public Set<String> getAuthors() {
         List<Post> posts = postRepo.findAll();
-        List<String> authors = new ArrayList<>();
+        Set<String> authors = new LinkedHashSet<>();
         for (Post post : posts) {
-            String authorName = post.getAuthor();
-            authors.add(authorName);
+            String a = post.getAuthor();
+            if (a != null && !a.isBlank()) {
+                authors.add(a.trim());
+            }
         }
-
         return authors;
     }
 
-    public Page<PostListItems> searchWithFilter(String keyword, List<String> selectedTags, String author, LocalDateTime from, LocalDateTime to, Pageable pageable) {
-        boolean hasTags = true;
-        if (selectedTags == null) {
-            selectedTags = new ArrayList<>();
-            hasTags = false;
-        }
-        return postRepo.searchAndFilter(keyword,
-                        author,
-                        from,
-                        to,
-                        hasTags,
-                        selectedTags, pageable)
-                .map(p -> new PostListItems(
-                        p.getId(),
-                        p.getTitle(),
-                        p.getAuthor(),
-                        p.getExcerpt(),
-                        p.getCreatedAt(),
-                        p.getTags().stream().map(t -> t.getName()).toList()
-                ));
+    public Page<PostListItems> searchWithFilter(
+            String keyword,
+            List<String> selectedTags,
+            List<String> selectedAuthors,
+            LocalDateTime from,
+            LocalDateTime to,
+            Pageable pageable
+    ) {
+        boolean hasTags = selectedTags != null && !selectedTags.isEmpty();
+        boolean hasAuthor = selectedAuthors != null && !selectedAuthors.isEmpty();
+
+        List<String> tagsLower = hasTags ? selectedTags.stream().filter(Objects::nonNull).map(String::toLowerCase).toList() : List.of();
+        List<String> authorsLower = hasAuthor ? selectedAuthors.stream().filter(Objects::nonNull).map(String::toLowerCase).toList() : List.of();
+
+        String k = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
+
+        return postRepo.searchAndFilter(
+                k, hasAuthor, authorsLower, from, to, hasTags, tagsLower, pageable
+        ).map(p -> new PostListItems(
+                p.getId(), p.getTitle(), p.getAuthor(), p.getExcerpt(),
+                p.getCreatedAt(), p.getTags().stream().map(t -> t.getName()).toList()
+        ));
     }
 }

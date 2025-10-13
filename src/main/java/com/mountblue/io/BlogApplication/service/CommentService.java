@@ -23,7 +23,7 @@ public class CommentService {
     @Autowired
     private PostRepository postRepo;
 
-    public void addComment(Long postId, CommentModel.CommentCreateRequest newComment){
+    public void addComment(Long postId, CommentModel.CommentCreateRequest newComment) {
         Post post = postRepo.findById(postId).orElseThrow();
 
         Comment comment = new Comment();
@@ -41,7 +41,7 @@ public class CommentService {
 
         List<CommentModel.CommentItem> commentItemList = new ArrayList<>();
 
-        for(Comment tempComment: comments) {
+        for (Comment tempComment : comments) {
             System.out.println(postId);
             System.out.println(tempComment.getComment());
             CommentModel.CommentItem commentDetail = new CommentModel.CommentItem(
@@ -71,20 +71,19 @@ public class CommentService {
         return tempComment;
     }
 
-    public void editComment(Long postId, CommentModel.CommentItem newComment) {
-        Post post = postRepo.findById(postId).orElseThrow();
+    public void editComment(Long postId, Long commentId, CommentModel.CommentItem newComment) {
+        // Ensure the post exists (optional guard)
+        postRepo.findById(postId).orElseThrow(); // can be removed if not needed
 
-        Comment comment = commentRepo.findById(postId).orElseThrow();
-
+        Comment comment = commentRepo.findById(commentId).orElseThrow();
         comment.setComment(newComment.text());
         comment.setName(newComment.name());
         comment.setEmail(newComment.email());
-
         commentRepo.save(comment);
-
     }
 
-    public void deleteComment(Long commentId){
+
+    public void deleteComment(Long commentId) {
         commentRepo.deleteById(commentId);
     }
 }

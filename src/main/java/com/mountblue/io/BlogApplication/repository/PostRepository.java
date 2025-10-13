@@ -17,6 +17,9 @@ import java.util.Optional;
 public interface PostRepository extends JpaRepository<Post, Long> {
 
     @Override
+    Page<Post> findAll(Pageable pageable);
+
+    @Override
     @EntityGraph(attributePaths = {"tags", "comments"})
     Optional<Post> findById(Long id);
 
@@ -31,43 +34,45 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
 
     @Query(
-            value = """ 
+            value = """
                       SELECT DISTINCT p
                       FROM Post p
                       LEFT JOIN p.tags t
                       WHERE
-                        ( :keyword IS NULL OR :keyword = '' OR
+                        (
+                          :keyword IS NULL OR :keyword = '' OR
                           LOWER(p.author)  LIKE LOWER(CONCAT('%', :keyword, '%')) OR
                           LOWER(p.title)   LIKE LOWER(CONCAT('%', :keyword, '%')) OR
                           LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
                           LOWER(t.name)    LIKE LOWER(CONCAT('%', :keyword, '%'))
                         )
-                        AND ( :author IS NULL OR :author = '' OR LOWER(p.author) LIKE LOWER(CONCAT('%', :author, '%')) )
+                        AND ( :hasAuthor = false OR LOWER(p.author) IN :authors )
                         AND p.publishedAt >= COALESCE(:from, p.publishedAt)
                         AND p.publishedAt <= COALESCE(:to,   p.publishedAt)
                         AND ( :hasTags = false OR LOWER(t.name) IN :tagNames )
-                    
                     """,
             countQuery = """
-                    SELECT COUNT(DISTINCT p)
-                    FROM Post p
-                    LEFT JOIN p.tags t
-                    WHERE
-                      ( :keyword IS NULL OR :keyword = '' OR
-                        LOWER(p.author) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                        LOWER(p.title)  LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                        LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                        LOWER(t.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                      )
-                      AND ( :author IS NULL OR :author = '' OR LOWER(p.author) LIKE LOWER(CONCAT('%', :author, '%')) )
-                      AND p.publishedAt >= COALESCE(:from, p.publishedAt)
-                      AND p.publishedAt <= COALESCE(:to, p.publishedAt)
-                      AND ( :hasTags = false OR LOWER(t.name) IN :tagNames )
+                      SELECT COUNT(DISTINCT p)
+                      FROM Post p
+                      LEFT JOIN p.tags t
+                      WHERE
+                        (
+                          :keyword IS NULL OR :keyword = '' OR
+                          LOWER(p.author)  LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                          LOWER(p.title)   LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                          LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                          LOWER(t.name)    LIKE LOWER(CONCAT('%', :keyword, '%'))
+                        )
+                        AND ( :hasAuthor = false OR LOWER(p.author) IN :authors )
+                        AND p.publishedAt >= COALESCE(:from, p.publishedAt)
+                        AND p.publishedAt <= COALESCE(:to,   p.publishedAt)
+                        AND ( :hasTags = false OR LOWER(t.name) IN :tagNames )
                     """
     )
     Page<Post> searchAndFilter(
             @Param("keyword") String keyword,
-            @Param("author") String author,
+            @Param("hasAuthor") boolean hasAuthor,
+            @Param("authors") List<String> authors,
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to,
             @Param("hasTags") boolean hasTags,

@@ -57,6 +57,22 @@
         }
         .dd-actions button:hover { background:#f5f5f5; }
 
+        #authors-dd-toggle { position:absolute; opacity:0; pointer-events:none; }
+        .dropdown-menu {
+            position:absolute; top:110%; left:0; z-index:10;
+            min-width:100px; max-height:150px; overflow:auto;
+            padding:2px; border:1px solid var(--border); border-radius:8px; background:#fff;
+            box-shadow:0 2px 6px rgba(0,0,0,.08);
+            display:none;
+        }
+        #authors-dd-toggle:checked + label + .dropdown-menu { display:block; }
+        .checkbox-row { display:flex; align-items:center; gap:2px; margin:4px 0; }
+        .dd-actions { display:flex; gap:2px; justify-content:flex-end; margin-top:2px; }
+        .dd-actions button {
+            padding:2px 4px; border:1px solid var(--border); border-radius:8px; background:#fff; cursor:pointer;
+        }
+        .dd-actions button:hover { background:#f5f5f5; }
+
         /* disable whole filters row when no key */
         .filters-disabled { opacity:.6; pointer-events:none; }
     </style>
@@ -70,14 +86,28 @@
             <button type="submit">Search</button>
         </form>
 
-        <form th:action="@{/post/search/filter}" method="get"
+        <form th:action="@{/post/search}" method="get"
               style="display:inline-flex; gap:8px; align-items:center;">
             <input type="hidden" name="key" th:value="${key}"/>
 
-            <select name="author">
-                <option value="">Author (any)</option>
-                <option th:each="a : ${authors}" th:value="${a}" th:text="${a}">Author</option>
-            </select>
+            <div class="dropdown">
+                <input type="checkbox" id="authors-dd-toggle"/>
+                <label for="authors-dd-toggle" class="dropdown-toggle">Authors</label>
+                <div class="dropdown-menu">
+                    <div th:each="a : ${authors}" class="checkbox-row">
+                        <input type="checkbox"
+                               name="authors"
+                               th:id="${'author_' + a}"
+                               th:value="${a}"
+                               th:attr="checked=${selectedAuthors != null and selectedAuthors.contains(a)} ? 'checked' : null"/>
+                        <label th:for="${'author_' + a}" th:text="${a}">author</label>
+                    </div>
+                    <div class="dd-actions">
+                        <label for="authors-dd-toggle" class="dropdown-toggle">Close</label>
+                        <button type="submit">Apply</button>
+                    </div>
+                </div>
+            </div>
 
             <input type="datetime-local" name="from"/>
             <input type="datetime-local" name="to"/>
@@ -103,12 +133,23 @@
                 </div>
             </div>
 
+            <div class="sort-controls">
+                <a th:href="@{/post(start=1, order='desc', key=${key})}"
+                   th:classappend="${order}=='desc' ? 'active' : ''">Newest first</a>
+                <a th:href="@{/post(start=1, order='asc',  key=${key})}"
+                   th:classappend="${order}=='asc' ? 'active' : ''">Oldest first</a>
+            </div>
+
+            <!-- Showing range and totals -->
+            <p class="range">
+                Showing
+                <span th:text="${page.number * page.size + 1}">1</span>
+                -
+                <span th:text="${(page.number + 1) * page.size > page.totalElements ? page.totalElements : (page.number + 1) * page.size}">10</span>
+                of <span th:text="${page.totalElements}">0</span>
+            </p>
             <button type="submit">Apply</button>
         </form>
-
-        <select
-            <option>Sort</option>
-        </select>
         <a href="#" style="margin-left:12px;">Login</a>
     </div>
 </header>
@@ -130,9 +171,24 @@
     </div>
 </div>
 
-<div class="pager">
-    <span>&lt; Previous</span>
-    <span>Next &gt;</span>
-</div>
+<nav class="pagination">
+    <!-- Prev -->
+    <a th:if="${!page.first}"
+       th:href="@{/post(start=${prevStart}, order=${order}, key=${key})}">Prev</a>
+    <span th:unless="${!page.first}">Prev</span>
+
+    <!-- Page numbers: i = 0..totalPages-1, start = i*10 + 1 -->
+    <span th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}">
+    <a th:if="${i != page.number}"
+       th:href="@{/post(start=${i * 10 + 1}, order=${order}, key=${key})}"
+       th:text="${i + 1}">1</a>
+    <span th:unless="${i != page.number}" class="current" th:text="${i + 1}">1</span>
+  </span>
+
+    <!-- Next -->
+    <a th:if="${!page.last}"
+       th:href="@{/post(start=${nextStart}, order=${order}, key=${key})}">Next</a>
+    <span th:unless="${!page.last}">Next</span>
+</nav>
 </body>
 </html>
