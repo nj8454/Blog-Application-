@@ -9,11 +9,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Getter @Setter
+@Getter
+@Setter
 @ToString(exclude = {"tags", "comments", "user"})
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @Entity
 @Table(name = "posts")
 public class Post {
@@ -74,14 +74,4 @@ public class Post {
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Post other = (Post) o;
-        return id != null && id.equals(other.id);
-    }
-    @Override
-    public int hashCode() { return getClass().hashCode(); }
 }

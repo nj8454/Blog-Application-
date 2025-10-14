@@ -1,6 +1,7 @@
 package com.mountblue.io.BlogApplication.controller;
 
-import com.mountblue.io.BlogApplication.dto.CommentModel;
+import com.mountblue.io.BlogApplication.dto.CommentCreateRequest;
+import com.mountblue.io.BlogApplication.dto.CommentItem;
 import com.mountblue.io.BlogApplication.service.CommentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -15,8 +16,9 @@ public class CommentController {
 
     @PostMapping("")
     public String createComment(@PathVariable("postId") Long postId,
-                                @ModelAttribute("comment") CommentModel.CommentCreateRequest newComment) {
+                                @ModelAttribute("comment") CommentCreateRequest newComment) {
         commentService.addComment(postId, newComment);
+
         return "redirect:/post/" + postId;
     }
 
@@ -24,8 +26,7 @@ public class CommentController {
     public String showUpdateComment(@PathVariable("postId") Long postId
             , @PathVariable("commentId") Long commentId
             , Model model) {
-        CommentModel.CommentItem comment = commentService.getComment(commentId);
-        model.addAttribute("postId", postId);
+        CommentItem comment = commentService.getComment(commentId);
         model.addAttribute("postId", postId);
         model.addAttribute("comment", comment);
 
@@ -35,16 +36,16 @@ public class CommentController {
     @PostMapping("/{commentId}/edit")
     public String updateComment(@PathVariable("postId") Long postId,
                                 @PathVariable("commentId") Long commentId,
-                                @ModelAttribute("comment") CommentModel.CommentItem newComment) {
-        commentService.editComment(postId, commentId, newComment);
+                                @ModelAttribute("comment") CommentItem newComment) {
+        commentService.editComment(commentId, newComment);
+
         return "redirect:/post/" + postId;
     }
 
     @PostMapping("/{commentId}/delete")
     public String removeComment(@PathVariable("postId") Long postId
             , @PathVariable("commentId") Long commentId
-            , @ModelAttribute("comment") CommentModel.CommentItem newComment) {
-
+            , @ModelAttribute("comment") CommentItem newComment) {
         commentService.deleteComment(commentId);
 
         return "redirect:/post/" + postId;

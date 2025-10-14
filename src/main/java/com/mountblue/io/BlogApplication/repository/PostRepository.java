@@ -23,16 +23,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @EntityGraph(attributePaths = {"tags", "comments"})
     Optional<Post> findById(Long id);
 
-
-    List<Post>
-    findDistinctByAuthorContainingIgnoreCaseOrTitleContainingIgnoreCaseOrContentContainingIgnoreCaseOrTags_NameContainingIgnoreCase
-            (String postAuthor
-                    , String postTitle
-                    , String postContent
-                    , String postTag
-                    , Pageable pageable);
-
-
     @Query(
             value = """
                       SELECT DISTINCT p

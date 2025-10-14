@@ -41,11 +41,11 @@
 <section style="margin-top:32px;">
     <h2>Comments</h2>
 
-    <div th:if="${#lists.isEmpty(comments)}" style="color:#666;margin-bottom:10px;">
+    <div th:if="${#lists.isEmpty(post.comments)}" style="color:#666;margin-bottom:10px;">
         No comments yet — be the first to comment.
     </div>
 
-    <div th:each="c : ${comments}" style="border-top:1px solid #eee;padding:12px 0;">
+    <div th:each="c : ${post.comments}" style="border-top:1px solid #eee;padding:12px 0;">
         <div style="font-weight:600;" th:text="${c.name}">Name</div>
         <div style="color:#666;font-size:.9rem;"
              th:text="${#temporals.format(c.createdAt, 'dd/MM/yyyy HH:mm')}">Date

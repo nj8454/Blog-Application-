@@ -1,6 +1,5 @@
 package com.mountblue.io.BlogApplication.service;
 
-import com.mountblue.io.BlogApplication.entities.Post;
 import com.mountblue.io.BlogApplication.entities.Tag;
 import com.mountblue.io.BlogApplication.repository.TagRepository;
 import lombok.*;
@@ -9,12 +8,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 
-@Data
-@RequiredArgsConstructor
 @Service
 public class TagService {
-    private final TagRepository tagRepo;
-    private Tag tagDb;
+    @Autowired
+    private TagRepository tagRepo;
 
     public Set<Tag> saveTags(String tagString) {
         String[] parts = tagString.split(",");
@@ -31,12 +28,12 @@ public class TagService {
 
     public List<String> getTags() {
         List<Tag> tags = tagRepo.findAll();
-        List<String> tagsname = new ArrayList<>();
-        for(Tag tag: tags){
-            String autorName = tag.getName();
-            tagsname.add(autorName);
+        List<String> tagsName = new ArrayList<>();
+        for (Tag tag : tags) {
+            String name = tag.getName();
+            tagsName.add(name);
         }
 
-        return tagsname;
+        return tagsName;
     }
 }

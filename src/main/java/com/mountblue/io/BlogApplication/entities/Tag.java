@@ -7,11 +7,11 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-@Getter @Setter
+@Getter
+@Setter
 @ToString(exclude = "posts")
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @Entity
 @Table(name = "tags")
 public class Tag {
@@ -32,7 +32,7 @@ public class Tag {
     private Set<Post> posts = new HashSet<>();
 
     public Tag(String name) {
-        this.name=name;
+        this.name = name;
     }
 
     @PrePersist
@@ -44,15 +44,4 @@ public class Tag {
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Tag other = (Tag) o;
-        return id != null && id.equals(other.id);
-    }
-    @Override
-    public int hashCode() { return getClass().hashCode(); }
-
 }
