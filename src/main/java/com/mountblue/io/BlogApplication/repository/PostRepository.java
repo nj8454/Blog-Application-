@@ -23,42 +23,23 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @EntityGraph(attributePaths = {"tags", "comments"})
     Optional<Post> findById(Long id);
 
-    @Query(
-            value = """
-                      SELECT DISTINCT p
-                      FROM Post p
-                      LEFT JOIN p.tags t
-                      WHERE
-                        (
-                          :keyword IS NULL OR :keyword = '' OR
-                          LOWER(p.author)  LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                          LOWER(p.title)   LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                          LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                          LOWER(t.name)    LIKE LOWER(CONCAT('%', :keyword, '%'))
-                        )
-                        AND ( :hasAuthor = false OR LOWER(p.author) IN :authors )
-                        AND p.publishedAt >= COALESCE(:from, p.publishedAt)
-                        AND p.publishedAt <= COALESCE(:to,   p.publishedAt)
-                        AND ( :hasTags = false OR LOWER(t.name) IN :tagNames )
-                    """,
-            countQuery = """
-                      SELECT COUNT(DISTINCT p)
-                      FROM Post p
-                      LEFT JOIN p.tags t
-                      WHERE
-                        (
-                          :keyword IS NULL OR :keyword = '' OR
-                          LOWER(p.author)  LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                          LOWER(p.title)   LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                          LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                          LOWER(t.name)    LIKE LOWER(CONCAT('%', :keyword, '%'))
-                        )
-                        AND ( :hasAuthor = false OR LOWER(p.author) IN :authors )
-                        AND p.publishedAt >= COALESCE(:from, p.publishedAt)
-                        AND p.publishedAt <= COALESCE(:to,   p.publishedAt)
-                        AND ( :hasTags = false OR LOWER(t.name) IN :tagNames )
-                    """
-    )
+    @Query("""
+              SELECT DISTINCT p
+              FROM Post p
+              LEFT JOIN p.tags t
+              WHERE
+                (
+                  :keyword IS NULL OR :keyword = '' OR
+                  LOWER(p.author)  LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                  LOWER(p.title)   LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                  LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                  LOWER(t.name)    LIKE LOWER(CONCAT('%', :keyword, '%'))
+                )
+                AND ( :hasAuthor = false OR LOWER(p.author) IN :authors )
+                AND p.publishedAt >= COALESCE(:from, p.publishedAt)
+                AND p.publishedAt <= COALESCE(:to,   p.publishedAt)
+                AND ( :hasTags = false OR LOWER(t.name) IN :tagNames )
+            """)
     Page<Post> searchAndFilter(
             @Param("keyword") String keyword,
             @Param("hasAuthor") boolean hasAuthor,

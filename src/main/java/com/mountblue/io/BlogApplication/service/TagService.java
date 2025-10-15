@@ -10,8 +10,11 @@ import java.util.*;
 
 @Service
 public class TagService {
-    @Autowired
     private TagRepository tagRepo;
+
+    public TagService(TagRepository tagRepo) {
+        this.tagRepo = tagRepo;
+    }
 
     public Set<Tag> saveTags(String tagString) {
         String[] parts = tagString.split(",");

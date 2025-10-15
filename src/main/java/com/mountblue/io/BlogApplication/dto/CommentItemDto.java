@@ -1,6 +1,6 @@
 package com.mountblue.io.BlogApplication.dto;
 
-public record CommentItem(
+public record CommentItemDto(
         Long id,
         String name,
         String email,

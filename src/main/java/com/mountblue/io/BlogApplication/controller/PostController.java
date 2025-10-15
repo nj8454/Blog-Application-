@@ -1,16 +1,21 @@
 package com.mountblue.io.BlogApplication.controller;
 
+import com.mountblue.io.BlogApplication.config.UserPrincipal;
+import com.mountblue.io.BlogApplication.dto.CommentCreateDto;
 import com.mountblue.io.BlogApplication.dto.PostCreateDto;
 import com.mountblue.io.BlogApplication.dto.PostDetailDto;
+import com.mountblue.io.BlogApplication.repository.UserRepository;
 import com.mountblue.io.BlogApplication.service.CommentService;
 import com.mountblue.io.BlogApplication.service.PostService;
 import com.mountblue.io.BlogApplication.service.TagService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.mountblue.io.BlogApplication.service.UserService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -19,26 +24,46 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Controller
-@RequestMapping("/post")
+@RequestMapping({"/", "/post"})
 public class PostController {
-
-    @Autowired
     private PostService postService;
-    @Autowired
     private CommentService commentService;
-    @Autowired
     private TagService tagService;
+    private UserService userService;
+
+    public PostController(PostService postService,
+                          CommentService commentService,
+                          TagService tagService,
+                          UserService userService) {
+        this.postService = postService;
+        this.commentService = commentService;
+        this.tagService = tagService;
+        this.userService = userService;
+    }
 
     @GetMapping("/create")
-    public String showCreateForm(Model model) {
+    public String showCreateForm(@AuthenticationPrincipal UserPrincipal user, Model model) {
         model.addAttribute("post", new PostCreateDto("", "", "", ""));
+        model.addAttribute("authorName", user.getDisplayName());
+
+        boolean isAdmin = user
+                .getAuthorities()
+                .stream()
+                .anyMatch(a ->
+                        a.getAuthority().equals("ROLE_ADMIN"));
+        if (isAdmin) {
+            model.addAttribute("authors", userService.findAuthors("AUTHOR"));
+        }
         return "create-post";
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','AUTHOR')")
     @PostMapping("/save")
-    public String createPost(@ModelAttribute("post") PostCreateDto postCreateDto) {
-        postService.savePost(postCreateDto);
-        return "redirect:/post/create?success";
+    public String createPost(@ModelAttribute("post") PostCreateDto postCreateDto,
+                             @RequestParam(value = "authorId", required = false) Long authorId,
+                             @AuthenticationPrincipal UserPrincipal currentUser) {
+        postService.savePost(postCreateDto, currentUser, authorId);
+        return "redirect:/post/create";
     }
 
     @GetMapping({""})
@@ -114,29 +139,38 @@ public class PostController {
 
 
     @GetMapping("/{id}")
-    public String postDetail(@PathVariable Long postId, Model model) {
-        model.addAttribute("post", postService.detail(postId));
+    public String postDetail(@PathVariable("id") Long id,
+                             Model model,
+                             @AuthenticationPrincipal UserPrincipal currentUser) {
+        model.addAttribute("post", postService.detail(id));
+        model.addAttribute("comment", new CommentCreateDto("", "", ""));
+        Long currentUserId = (currentUser != null) ? currentUser.getId() : null;
+        model.addAttribute("currentUserId", currentUserId);
 
         return "post-details";
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @postSecurity.isOwner(#id, authentication)")
     @GetMapping("/{id}/update")
-    public String showUpdateForm(@PathVariable Long postId, Model model) {
-        PostDetailDto oldPost = postService.detail(postId);
+    public String showUpdateForm(@PathVariable("id") Long id, Model model) {
+        PostDetailDto oldPost = postService.detail(id);
         model.addAttribute("post", oldPost);
         return "post-edit";
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @postSecurity.isOwner(#id, authentication)")
     @PostMapping("/{id}/update")
-    public String updatePost(@PathVariable Long postId,
-                             @ModelAttribute("post") PostDetailDto updatedPost) {
-        postService.editPost(postId, updatedPost);
-        return "redirect:/post/" + postId;
+    public String updatePost(@PathVariable("id") Long id,
+                             @ModelAttribute("post") PostDetailDto updatedPost,
+                             @AuthenticationPrincipal UserPrincipal currentUser) {
+        postService.editPost(id, updatedPost, currentUser);
+        return "redirect:/post/" + id;
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @postSecurity.isOwner(#id, authentication)")
     @PostMapping("/{id}/delete")
-    public String deletePost(@PathVariable Long postId) {
-        postService.deletePost(postId);
+    public String deletePost(@PathVariable("id") Long id) {
+        postService.deletePost(id);
         return "redirect:/post";
     }
 }

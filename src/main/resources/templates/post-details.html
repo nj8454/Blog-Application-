@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymleaf.org/extras/spring-security" lang="en">
 <head>
     <meta charset="UTF-8"/>
     <title th:text="${post.title}">Post</title>
@@ -14,6 +15,11 @@
 </head>
 <body>
 <p><a th:href="@{'/post'}">← All Posts</a></p>
+<div sec:authorize="isAuthenticated()">
+    <form th:action="@{/logout}" method="post" style="display:inline;">
+        <button type="submit">Logout</button>
+    </form>
+</div>
 <h1 th:text="${post.title}">Title</h1>
 <div class="meta">
     <span th:text="${post.author}">Author</span>,
@@ -24,19 +30,24 @@
     Tags:
     <span th:text="${#strings.listJoin(post.tags, ', ')}">tag1, tag2</span>
 </div>
+<div th:if="${currentUserId != null and post.user != null and currentUserId == post.user.id}">
+    <form th:action="@{|/post/${post.id}/update|}" method="get" style="margin-top:12px;">
+        <button type="submit">Update</button>
+    </form>
+    <form th:action="@{|/post/${post.id}/delete|}" method="post" style="margin-top:12px;">
+        <button type="submit" onclick="return confirm('Delete this post?');">Delete</button>
+    </form>
+</div>
 
-<form th:action="@{|/post/${post.id}/update|}" method="get" style="margin-top:12px;">
-    <button type="submit">
-        Update
-    </button>
-</form>
-
-<form th:action="@{|/post/${post.id}/delete|}" method="post" style="margin-top:12px;">
-    <button type="submit" onclick="return confirm('Delete this post?');">
-        Delete
-    </button>
-</form>
-
+<!-- Admin-only controls (optional, if admins should always see them) -->
+<div sec:authorize="hasRole('ADMIN')">
+    <form th:action="@{|/post/${post.id}/update|}" method="get" style="margin-top:12px;">
+        <button type="submit">Update</button>
+    </form>
+    <form th:action="@{|/post/${post.id}/delete|}" method="post" style="margin-top:12px;">
+        <button type="submit" onclick="return confirm('Delete this post?');">Delete</button>
+    </form>
+</div>
 
 <section style="margin-top:32px;">
     <h2>Comments</h2>
@@ -51,16 +62,24 @@
              th:text="${#temporals.format(c.createdAt, 'dd/MM/yyyy HH:mm')}">Date
         </div>
         <p style="margin:6px 0 0;" th:text="${c.text}">Comment text...</p>
-        <form th:action="@{|/post/${post.id}/comments/${c.id}/edit|}" method="get" style="margin-top:12px;">
-            <button type="submit">
-                edit
-            </button>
-        </form>
-        <form th:action="@{|/post/${post.id}/comments/${c.id}/delete|}" method="post" style="margin-top:12px;">
-            <button type="submit">
-                Delete
-            </button>
-        </form>
+
+        <div sec:authorize="hasRole('ADMIN')">
+            <form th:action="@{|/post/${post.id}/comments/${c.id}/edit|}" method="get" style="margin-top:12px;">
+                <button type="submit">edit</button>
+            </form>
+            <form th:action="@{|/post/${post.id}/comments/${c.id}/delete|}" method="post" style="margin-top:12px;">
+                <button type="submit">Delete</button>
+            </form>
+        </div>
+
+        <div th:if="${currentUserId != null and post.user != null and currentUserId == post.user.id}">
+            <form th:action="@{|/post/${post.id}/comments/${c.id}/edit|}" method="get" style="margin-top:12px;">
+                <button type="submit">edit</button>
+            </form>
+            <form th:action="@{|/post/${post.id}/comments/${c.id}/delete|}" method="post" style="margin-top:12px;">
+                <button type="submit">Delete</button>
+            </form>
+        </div>
     </div>
 </section>
 <section style="margin-top:24px;">

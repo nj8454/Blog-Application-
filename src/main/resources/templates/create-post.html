@@ -1,18 +1,21 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title>Create Post</title>
     <style>
-        body { font-family: sans-serif; max-width: 720px; margin: 24px auto; padding: 0 12px; }
+        body { font-family: sans-serif; max-width: 720px; margin: 24px auto; padding: 0 12px; color:#111; background:#fff; }
         form { display: grid; gap: 12px; }
-        input[type=text], textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
-        button { padding: 10px 14px; border: none; background: #2a6; color: #fff; border-radius: 6px; cursor: pointer; }
-        .alert { padding: 10px; background: #e8f8ee; border: 1px solid #9cd3b5; border-radius: 6px; color: #155b36; }
+        input[type=text], textarea { width: 100%; padding: 8px; border: 1px solid #bbb; border-radius: 6px; background:#fff; color:#111; }
+        button { padding: 10px 14px; border: 1px solid #111; background:#111; color:#fff; border-radius: 6px; cursor: pointer; }
+        button:hover { background:#000; }
+        .alert { padding: 10px; background:#f5f5f5; border: 1px solid #bbb; border-radius: 6px; color:#111; }
     </style>
 </head>
 <body>
 <h2>Create Post</h2>
+<p><a th:href="@{'/post'}">← All Posts</a></p>
 
 <div th:if="${param.success}" class="alert">Post created successfully.</div>
 
@@ -20,8 +23,17 @@
     <label>Title</label>
     <input type="text" th:field="*{title}" placeholder="Enter title" required>
 
-    <label>Author</label>
-    <input type="text" th:field="*{author}" placeholder="Enter author" required>
+    <div sec:authorize="hasRole('ADMIN')">
+        <label>Author</label>
+        <select name="authorId" required>
+            <option th:each="u : ${authors}" th:value="${u.id}" th:text="${u.name}"></option>
+        </select>
+    </div>
+
+    <div sec:authorize="!hasRole('ADMIN')">
+        <label>Author</label>
+        <input type="text" th:value="${authorName}" disabled/>
+    </div>
 
     <label>Content</label>
     <textarea th:field="*{content}" rows="6" placeholder="Write content..." required></textarea>

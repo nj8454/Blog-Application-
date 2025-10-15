@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Login</title>
+    <style>
+        :root { --border:#ddd; }
+        * { box-sizing: border-box; }
+        html, body { margin:0; padding:0; background:#fff; color:#111;
+          font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+        .wrap { min-height: 100vh; display:flex; align-items:center; justify-content:center; padding: 24px; }
+        .card { width: 100%; max-width: 360px; border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+        h1 { margin: 0 0 14px; font-size: 22px; font-weight: 600; }
+        form { display: grid; gap: 10px; }
+        label { font-size: 14px; }
+        input[type="text"], input[type="password"] {
+          width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background:#fff; color:#111;
+        }
+        button[type="submit"] {
+          padding: 10px 12px; border: 1px solid #111; background:#111; color:#fff; border-radius: 6px; cursor: pointer;
+        }
+        button[type="submit"]:hover { background:#000; }
+        .row { display: grid; gap: 6px; }
+        .error { color:#c00; font-size: 13px; margin-top: -4px; }
+        .global { margin: 6px 0 0; }
+        .hint { font-size: 13px; color:#444; text-align:right; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="card">
+        <h1>Sign in</h1>
+        <form th:action="@{/authenticateTheUser}" method="post">
+            <div th:if="${param.error}">
+                <i>Sorry! you entered invalid email/password</i>
+            </div>
+
+            <div class="row">
+                User email: <input type="text" name="email"/>
+            </div>
+            <div class="row">
+                Password: <input type="password" name="password"/>
+            </div>
+            <button type="submit">Login</button>
+        </form>
+            <div class="hint" th:if="${param.logout}">You have been logged out</div>
+
+            <p class="footer">Doesn’t have account? <a th:href="@{/register}">Create one</a></p>
+        </form>
+    </div>
+</div>
+</body>
+</html>

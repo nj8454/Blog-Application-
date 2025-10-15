@@ -1,5 +1,7 @@
 package com.mountblue.io.BlogApplication.dto;
 
+import com.mountblue.io.BlogApplication.entities.User;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -11,6 +13,7 @@ public record PostDetailDto(
         String content,
         LocalDateTime createdAt,
         List<String> tags,
-        List<CommentItem> comments
+        List<CommentItemDto> comments,
+        User user
 ) {
 }

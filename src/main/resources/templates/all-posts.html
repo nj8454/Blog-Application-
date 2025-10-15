@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymleaf.org/extras/spring-security" lang="en">
 <head>
     <meta charset="UTF-8"/>
     <title>My Blog Application</title>
@@ -133,7 +134,21 @@
             </select>
             <button type="submit">Apply</button>
         </form>
-        <a href="#" style="margin-left:12px;">Login</a>
+        <div sec:authorize="hasAnyRole('AUTHOR', 'ADMIN')">
+            <form th:action="@{/create}" method="get" style="margin-top:12px;">
+                <button type="submit">
+                    Create Blog
+                </button>
+            </form>
+        </div>
+    </div>
+    <span sec:authorize="isAnonymous()">
+        <a th:href="@{/login}" style="margin-left:12px;">Login</a>
+    </span>
+    <div sec:authorize="isAuthenticated()">
+        <form th:action="@{/logout}" method="post" style="display:inline;">
+            <button type="submit">Logout</button>
+        </form>
     </div>
 </header>
 

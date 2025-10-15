@@ -1,12 +1,14 @@
 package com.mountblue.io.BlogApplication.service;
 
-import com.mountblue.io.BlogApplication.dto.CommentItem;
+import com.mountblue.io.BlogApplication.config.UserPrincipal;
+import com.mountblue.io.BlogApplication.dto.CommentItemDto;
 import com.mountblue.io.BlogApplication.dto.PostCreateDto;
 import com.mountblue.io.BlogApplication.dto.PostDetailDto;
 import com.mountblue.io.BlogApplication.entities.Post;
 import com.mountblue.io.BlogApplication.entities.Tag;
+import com.mountblue.io.BlogApplication.entities.User;
 import com.mountblue.io.BlogApplication.repository.PostRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.mountblue.io.BlogApplication.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -16,19 +18,38 @@ import java.util.*;
 
 @Service
 public class PostService {
-    @Autowired
     private PostRepository postRepo;
-    @Autowired
     private TagService tagService;
+    private UserRepository userRepo;
 
-    public void savePost(PostCreateDto postCreateDto) {
+    public PostService(PostRepository postRepo, TagService tagService, UserRepository userRepo) {
+        this.postRepo = postRepo;
+        this.tagService = tagService;
+        this.userRepo = userRepo;
+    }
+
+    public void savePost(PostCreateDto postCreateDto, UserPrincipal currentUser, Long authorId) {
         Post post = new Post();
-        post.setAuthor(postCreateDto.author());
         post.setTitle(postCreateDto.title());
         post.setContent(postCreateDto.content());
         post.setExcerpt(postCreateDto.content().substring(0, 200) + "........");
         Set<Tag> tags = tagService.saveTags(postCreateDto.tag());
         post.setTags(tags);
+
+        boolean isAdmin = currentUser
+                .getAuthorities()
+                .stream()
+                .anyMatch(a ->
+                        a.getAuthority().equals("ROLE_ADMIN"));
+        User owner;
+        if (isAdmin && authorId != null) {
+            owner = userRepo.findById(authorId).orElseThrow();
+        } else {
+            owner = userRepo.getReferenceById(currentUser.getId());
+        }
+        post.setUser(owner);
+        post.setAuthor(owner.getName());
+
         postRepo.save(post);
     }
 
@@ -47,14 +68,15 @@ public class PostService {
                         p.getCreatedAt(),
                         p.getTags().stream().map(t -> t.getName()).toList(),
                         p.getComments().stream()
-                                .map(c -> new CommentItem(
+                                .map(c -> new CommentItemDto(
                                         c.getId(),
                                         c.getName(),
                                         c.getEmail(),
                                         c.getComment(),
                                         c.getCreatedAt()
                                 ))
-                                .toList()
+                                .toList(),
+                        p.getUser()
                 ));
     }
 
@@ -69,18 +91,19 @@ public class PostService {
                 p.getCreatedAt(),
                 p.getTags().stream().map(t -> t.getName()).toList(),
                 p.getComments().stream()
-                        .map(c -> new CommentItem(
+                        .map(c -> new CommentItemDto(
                                 c.getId(),
                                 c.getName(),
                                 c.getEmail(),
                                 c.getComment(),
                                 c.getCreatedAt()
                         ))
-                        .toList()
+                        .toList(),
+                p.getUser()
         );
     }
 
-    public void editPost(Long id, PostDetailDto updatedPost) {
+    public void editPost(Long id, PostDetailDto updatedPost, UserPrincipal currentUser) {
         Post oldPost = postRepo.findById(id).orElseThrow();
 
         oldPost.setAuthor(updatedPost.author());
@@ -142,16 +165,20 @@ public class PostService {
                         p.getContent(),
                         p.getCreatedAt(),
                         p.getTags().stream()
-                                .map(t -> t.getName()).toList(),
-                        p.getComments().stream()
-                                .map(c -> new CommentItem(
+                                .map(t ->
+                                        t.getName())
+                                .toList(),
+                        p.getComments()
+                                .stream()
+                                .map(c -> new CommentItemDto(
                                         c.getId(),
                                         c.getName(),
                                         c.getEmail(),
                                         c.getComment(),
                                         c.getCreatedAt()
                                 ))
-                                .toList()
+                                .toList(),
+                        p.getUser()
                 ));
     }
 }
