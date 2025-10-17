@@ -4,7 +4,6 @@ import com.mountblue.io.BlogApplication.config.UserPrincipal;
 import com.mountblue.io.BlogApplication.dto.CommentCreateDto;
 import com.mountblue.io.BlogApplication.dto.PostCreateDto;
 import com.mountblue.io.BlogApplication.dto.PostDetailDto;
-import com.mountblue.io.BlogApplication.repository.UserRepository;
 import com.mountblue.io.BlogApplication.service.CommentService;
 import com.mountblue.io.BlogApplication.service.PostService;
 import com.mountblue.io.BlogApplication.service.TagService;
@@ -42,17 +41,17 @@ public class PostController {
     }
 
     @GetMapping("/create")
-    public String showCreateForm(@AuthenticationPrincipal UserPrincipal user, Model model) {
+    public String showCreateForm(@AuthenticationPrincipal UserPrincipal currentUser, Model model) {
         model.addAttribute("post", new PostCreateDto("", "", "", ""));
-        model.addAttribute("authorName", user.getDisplayName());
+        model.addAttribute("authorName", currentUser.getDisplayName());
 
-        boolean isAdmin = user
+        boolean isAdmin = currentUser
                 .getAuthorities()
                 .stream()
                 .anyMatch(a ->
                         a.getAuthority().equals("ROLE_ADMIN"));
         if (isAdmin) {
-            model.addAttribute("authors", userService.findAuthors("AUTHOR"));
+            model.addAttribute("authors", userService.findAuthors());
         }
         return "create-post";
     }
@@ -152,9 +151,22 @@ public class PostController {
 
     @PreAuthorize("hasRole('ADMIN') or @postSecurity.isOwner(#id, authentication)")
     @GetMapping("/{id}/update")
-    public String showUpdateForm(@PathVariable("id") Long id, Model model) {
+    public String showUpdateForm(@PathVariable("id") Long id,
+                                 @AuthenticationPrincipal UserPrincipal currentUser,
+                                 Model model) {
         PostDetailDto oldPost = postService.detail(id);
         model.addAttribute("post", oldPost);
+        model.addAttribute("authorName", currentUser.getDisplayName());
+
+        boolean isAdmin = currentUser
+                .getAuthorities()
+                .stream()
+                .anyMatch(a ->
+                        a.getAuthority().equals("ROLE_ADMIN"));
+        if (isAdmin) {
+            model.addAttribute("authors", userService.findAuthors());
+        }
+
         return "post-edit";
     }
 
@@ -162,8 +174,9 @@ public class PostController {
     @PostMapping("/{id}/update")
     public String updatePost(@PathVariable("id") Long id,
                              @ModelAttribute("post") PostDetailDto updatedPost,
+                             @RequestParam(value = "authorId", required = false) Long authorId,
                              @AuthenticationPrincipal UserPrincipal currentUser) {
-        postService.editPost(id, updatedPost, currentUser);
+        postService.editPost(id, updatedPost, currentUser, authorId);
         return "redirect:/post/" + id;
     }
 

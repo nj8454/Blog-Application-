@@ -1,7 +1,6 @@
 package com.mountblue.io.BlogApplication.config;
 
 import com.mountblue.io.BlogApplication.entities.User;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -35,7 +34,7 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public String getPassword() {
-        return "{noop}" + user.getPassword();
+        return user.getPassword();
     }
 
     @Override

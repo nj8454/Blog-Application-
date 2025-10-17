@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymleaf.org/extras/spring-security" lang="en">
 <head>
     <meta charset="UTF-8"/>
     <title>Edit Post</title>
@@ -15,16 +16,25 @@
 
 <form th:action="@{|/post/${post.id}/update|}" method="post" th:object="${post}">
     <label>Title</label>
-    <input type="text" th:field="*{title}" required />
+    <input type="text" th:field="*{title}" required/>
 
-    <label>Author</label>
-    <input type="text" th:field="*{author}" required />
+    <div sec:authorize="hasRole('ADMIN')">
+        <label>Author</label>
+        <select name="authorId" required>
+            <option th:each="u : ${authors}" th:value="${u.id}" th:text="${u.name}"></option>
+        </select>
+    </div>
+
+    <div sec:authorize="!hasRole('ADMIN')">
+        <label>Author</label>
+        <input type="text" th:value="${authorName}" disabled/>
+    </div>
 
     <label>Content</label>
     <textarea rows="10" th:field="*{content}" required></textarea>
 
     <label>Tags (comma-separated)</label>
-    <input type="text" th:field="*{tags}" placeholder="java,spring,hibernate" />
+    <input type="text" th:field="*{tags}" placeholder="java,spring,hibernate"/>
 
     <div class="actions">
         <button type="submit">Save</button>

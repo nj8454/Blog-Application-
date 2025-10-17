@@ -2,7 +2,6 @@ package com.mountblue.io.BlogApplication.controller;
 
 import com.mountblue.io.BlogApplication.dto.UserCreateDto;
 import com.mountblue.io.BlogApplication.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;

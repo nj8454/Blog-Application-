@@ -3,6 +3,7 @@ package com.mountblue.io.BlogApplication.service;
 import com.mountblue.io.BlogApplication.dto.UserCreateDto;
 import com.mountblue.io.BlogApplication.entities.User;
 import com.mountblue.io.BlogApplication.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,9 +11,12 @@ import java.util.List;
 @Service
 public class UserService {
     private UserRepository userRepo;
+    private PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepo) {
+
+    public UserService(UserRepository userRepo, PasswordEncoder passwordEncoder) {
         this.userRepo = userRepo;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public void saveUser(UserCreateDto userCreateDto) {
@@ -20,13 +24,13 @@ public class UserService {
 
         newUser.setName(userCreateDto.name());
         newUser.setEmail(userCreateDto.email());
-        newUser.setPassword(userCreateDto.password());
+        newUser.setPassword(passwordEncoder.encode(userCreateDto.password()));
 
         userRepo.save(newUser);
 
     }
 
-    public List<User> findAuthors(String role) {
-        return userRepo.findAllByRole(role);
+    public List<User> findAuthors() {
+        return userRepo.findAll();
     }
 }

@@ -32,7 +32,7 @@ public class PostService {
         Post post = new Post();
         post.setTitle(postCreateDto.title());
         post.setContent(postCreateDto.content());
-        post.setExcerpt(postCreateDto.content().substring(0, 200) + "........");
+        post.setExcerpt(postCreateDto.content().substring(Math.min((200), postCreateDto.content().length())));
         Set<Tag> tags = tagService.saveTags(postCreateDto.tag());
         post.setTags(tags);
 
@@ -103,10 +103,21 @@ public class PostService {
         );
     }
 
-    public void editPost(Long id, PostDetailDto updatedPost, UserPrincipal currentUser) {
+    public void editPost(Long id, PostDetailDto updatedPost, UserPrincipal currentUser, Long authorId) {
         Post oldPost = postRepo.findById(id).orElseThrow();
 
-        oldPost.setAuthor(updatedPost.author());
+        boolean isAdmin = currentUser
+                .getAuthorities()
+                .stream()
+                .anyMatch(a ->
+                        a.getAuthority().equals("ROLE_ADMIN"));
+        User owner;
+        if (isAdmin && authorId != null) {
+            owner = userRepo.findById(authorId).orElseThrow();
+        } else {
+            owner = userRepo.getReferenceById(currentUser.getId());
+        }
+        oldPost.setAuthor(owner.getName());
         oldPost.setTitle(updatedPost.title());
         oldPost.setContent(updatedPost.content());
         oldPost.setExcerpt(updatedPost.content().substring(0, 200));

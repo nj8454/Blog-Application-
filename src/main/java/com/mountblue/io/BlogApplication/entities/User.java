@@ -35,7 +35,7 @@ public class User {
 
     @PrePersist
     protected void onSave() {
-        this.role = "USER";
+        this.role = "AUTHOR";
     }
 
 }
