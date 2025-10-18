@@ -19,7 +19,6 @@ public class UserController {
 
     @GetMapping("/login")
     public String longinForm() {
-
         return "login";
     }
 

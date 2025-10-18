@@ -1,6 +1,5 @@
 package com.mountblue.io.BlogApplication.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -9,17 +8,12 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
-import java.util.List;
-
 @Configuration
-@EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true)
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private MyUserDetailsService userDetailsService;
@@ -29,52 +23,33 @@ public class SecurityConfig {
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    @Bean
-    public DaoAuthenticationProvider daoAuthenticationProvider() {
-        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
-        daoAuthenticationProvider.setUserDetailsService(userDetailsService);
-        daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
-
-        return daoAuthenticationProvider;
-    }
-
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-
+    public SecurityFilterChain apiChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(configure ->
-                        configure
-                                .requestMatchers(HttpMethod.POST, "/post/save")
-                                .hasAnyRole("AUTHOR", "ADMIN")
-                                .requestMatchers(HttpMethod.POST, "/post/*/update", "/post/*/delete")
-                                .hasAnyRole("AUTHOR", "ADMIN")
-                                .requestMatchers(HttpMethod.POST,
-                                        "/post/*/comments/*/edit", "/post/*/comments/*/delete")
-                                .hasAnyRole("AUTHOR", "ADMIN")
-                                .requestMatchers(HttpMethod.GET, "/post/*/comments/*/edit")
-                                .hasAnyRole("AUTHOR", "ADMIN")
-                                .requestMatchers(HttpMethod.GET,
-                                        "/post", "/post/", "/post/*", "/post/**", "/post/search/**")
-                                .permitAll()
-                                .requestMatchers(HttpMethod.POST, "/post/*/comments", "/post/*/comments/")
-                                .permitAll()
-                                .requestMatchers("/login", "/register").permitAll()
-                                .anyRequest().authenticated()
+                .httpBasic(b -> {
+                })
+                .authorizeHttpRequests(auth -> auth
+
+                        .requestMatchers(HttpMethod.GET, "/post", "/post/", "/post/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
+
+                        .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
+
+                        .requestMatchers(HttpMethod.POST, "/api/posts/*/comments").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/comments/**").permitAll()
+
+                        .requestMatchers(HttpMethod.POST, "/post/*/comments").permitAll()
+                        .requestMatchers("/login", "/register").permitAll()
+                        .anyRequest().authenticated()
                 )
-                .formLogin(form ->
-                        form
-                                .loginPage("/login")
-                                .loginProcessingUrl("/authenticateTheUser")
-                                .usernameParameter("email")
-                                .passwordParameter("password")
-                                .defaultSuccessUrl("/post", true)
-                                .failureUrl("/login?error")
-                                .permitAll()
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .loginProcessingUrl("/authenticateTheUser")
+                        .usernameParameter("email")
+                        .passwordParameter("password")
+                        .defaultSuccessUrl("/post", true)
+                        .failureUrl("/login?error")
+                        .permitAll()
                 )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
@@ -83,14 +58,28 @@ public class SecurityConfig {
                         .clearAuthentication(true)
                         .deleteCookies("JSESSIONID")
                         .permitAll()
-                );
+                )
+                .authenticationProvider(daoAuthenticationProvider());
 
 
         return http.build();
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
-        return configuration.getAuthenticationManager();
+    public DaoAuthenticationProvider daoAuthenticationProvider() {
+        var p = new DaoAuthenticationProvider();
+        p.setUserDetailsService(userDetailsService);
+        p.setPasswordEncoder(passwordEncoder());
+        return p;
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration cfg) throws Exception {
+        return cfg.getAuthenticationManager();
     }
 }

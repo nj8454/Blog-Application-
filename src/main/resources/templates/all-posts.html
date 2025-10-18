@@ -77,14 +77,11 @@
 <header>
     <h1>My Blog Application</h1>
     <div class="toolbar">
-        <form th:action="@{/post/search}" method="get" class="searchbar">
+        <form th:action="@{/post}" method="get"
+              style="display:inline-flex; gap:8px; align-items:center;">
+
             <input type="search" name="key" placeholder="Search" th:value="${key}"/>
             <button type="submit">Search</button>
-        </form>
-
-        <form th:action="@{/post/search}" method="get"
-              style="display:inline-flex; gap:8px; align-items:center;">
-            <input type="hidden" name="oldkey" th:value="${oldkey}"/>
 
             <div class="dropdown">
                 <input type="checkbox" id="authors-dd-toggle"/>
@@ -135,7 +132,7 @@
             <button type="submit">Apply</button>
         </form>
         <div sec:authorize="hasAnyRole('AUTHOR', 'ADMIN')">
-            <form th:action="@{/create}" method="get" style="margin-top:12px;">
+            <form th:action="@{/post/create}" method="get" style="margin-top:12px;">
                 <button type="submit">
                     Create Blog
                 </button>
@@ -172,7 +169,7 @@
 <nav class="pagination">
     <!-- Prev -->
     <a th:if="${!page.first}"
-       th:href="@{/post/search(
+       th:href="@{/post(
         start=${prevStart},
         order=${order},
         key=${key},
@@ -185,7 +182,7 @@
 
     <span th:each="p : ${#numbers.sequence(0, page.totalPages - 1)}">
     <a th:if="${p != page.number}"
-       th:href="@{/post/search(
+       th:href="@{/post(
         start=${(p-1)*limit + 1},
         order=${order},
         key=${key},
@@ -200,7 +197,7 @@
 
     <!-- Next -->
     <a th:if="${!page.last}"
-       th:href="@{/post/search(
+       th:href="@{/post(
         start=${nextStart},
         order=${order},
         key=${key},

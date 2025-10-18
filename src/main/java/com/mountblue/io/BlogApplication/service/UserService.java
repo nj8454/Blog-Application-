@@ -1,6 +1,7 @@
 package com.mountblue.io.BlogApplication.service;
 
 import com.mountblue.io.BlogApplication.dto.UserCreateDto;
+import com.mountblue.io.BlogApplication.dto.UserDetailDto;
 import com.mountblue.io.BlogApplication.entities.User;
 import com.mountblue.io.BlogApplication.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,15 +20,14 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public void saveUser(UserCreateDto userCreateDto) {
-        User newUser = new User();
+    public UserDetailDto saveUser(UserCreateDto dto) {
+        User user = new User();
+        user.setName(dto.name());
+        user.setEmail(dto.email());
+        user.setPassword(passwordEncoder.encode(dto.password()));
+        User saved = userRepo.save(user);
 
-        newUser.setName(userCreateDto.name());
-        newUser.setEmail(userCreateDto.email());
-        newUser.setPassword(passwordEncoder.encode(userCreateDto.password()));
-
-        userRepo.save(newUser);
-
+        return new UserDetailDto(saved.getId(), saved.getName(), saved.getEmail(), null);
     }
 
     public List<User> findAuthors() {

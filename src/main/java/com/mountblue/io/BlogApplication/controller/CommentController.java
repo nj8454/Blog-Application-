@@ -21,7 +21,6 @@ public class CommentController {
     public String createComment(@PathVariable("postId") Long postId,
                                 @ModelAttribute("comment") CommentCreateDto newComment) {
         commentService.addComment(postId, newComment);
-
         return "redirect:/post/" + postId;
     }
 
@@ -41,7 +40,7 @@ public class CommentController {
     @PostMapping("/{commentId}/edit")
     public String updateComment(@PathVariable("postId") Long postId,
                                 @PathVariable("commentId") Long commentId,
-                                @ModelAttribute("comment") CommentItemDto newComment) {
+                                @ModelAttribute("comment") CommentCreateDto newComment) {
         commentService.editComment(commentId, newComment);
 
         return "redirect:/post/" + postId;

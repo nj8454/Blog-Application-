@@ -14,6 +14,6 @@ public record PostDetailDto(
         LocalDateTime createdAt,
         List<String> tags,
         List<CommentItemDto> comments,
-        User user
+        UserDetailDto user
 ) {
 }

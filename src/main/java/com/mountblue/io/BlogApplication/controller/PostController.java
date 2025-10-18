@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Controller
-@RequestMapping({"/", "/post"})
+@RequestMapping("/post")
 public class PostController {
     private PostService postService;
     private CommentService commentService;
@@ -66,34 +66,6 @@ public class PostController {
     }
 
     @GetMapping({""})
-    public String getAllPost(
-            @RequestParam(name = "order", defaultValue = "desc") String order,
-            @RequestParam(name = "start", defaultValue = "1") int start,
-            Model model) {
-        final int PAGE_SIZE = 10;
-        int safeStart = Math.max(start, 1);
-        int pageIndex = (safeStart - 1) / PAGE_SIZE;
-
-        Sort.Direction dir = "asc".equalsIgnoreCase(order) ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Sort sort = Sort.by(new Sort.Order(dir, "publishedAt"));
-        Pageable pageable = PageRequest.of(pageIndex, PAGE_SIZE, sort);
-
-        Page<PostDetailDto> page = postService.getPostList(pageable);
-
-        model.addAttribute("posts", page.getContent());
-        model.addAttribute("page", page);
-        model.addAttribute("start", safeStart);
-        model.addAttribute("limit", PAGE_SIZE);
-        model.addAttribute("nextStart", safeStart + PAGE_SIZE);
-        model.addAttribute("prevStart", Math.max(1, safeStart - PAGE_SIZE));
-        model.addAttribute("order", dir);
-        model.addAttribute("authors", postService.getAuthors());
-        model.addAttribute("allTags", tagService.getTags());
-
-        return "all-posts";
-    }
-
-    @GetMapping({"/search"})
     public String getAllPostWithSearchAndFilter(@RequestParam(name = "key", required = false) String keyword
             , @RequestParam(name = "authors", required = false) List<String> selectedAuthors
             , @RequestParam(name = "order", defaultValue = "desc") String order

@@ -7,8 +7,8 @@ import org.springframework.stereotype.Component;
 
 @Component("postSecurity")
 public class PostSecurity {
-    private final PostRepository postRepo;
-    private final CommentRepository commentRepo;
+    private PostRepository postRepo;
+    private CommentRepository commentRepo;
 
     public PostSecurity(PostRepository postRepo, CommentRepository commentRepo) {
         this.postRepo = postRepo;
@@ -25,9 +25,8 @@ public class PostSecurity {
     public boolean isOwnerByComment(Long commentId, Authentication auth) {
         if (commentId == null || auth == null || !(auth.getPrincipal() instanceof UserPrincipal up)) return false;
         return commentRepo.findById(commentId)
-                .map(c -> c.getPost() != null
-                        && c.getPost().getUser() != null
-                        && c.getPost().getUser().getId().equals(up.getId()))
+                .map(c -> c.getPost() != null && c.getPost().getUser() != null &&
+                        c.getPost().getUser().getId().equals(up.getId()))
                 .orElse(false);
     }
 }

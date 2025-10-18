@@ -17,9 +17,6 @@ import java.util.Optional;
 public interface PostRepository extends JpaRepository<Post, Long> {
 
     @Override
-    Page<Post> findAll(Pageable pageable);
-
-    @Override
     @EntityGraph(attributePaths = {"tags", "comments"})
     Optional<Post> findById(Long id);
 

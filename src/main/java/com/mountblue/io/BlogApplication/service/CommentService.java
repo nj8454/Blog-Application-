@@ -9,6 +9,8 @@ import com.mountblue.io.BlogApplication.repository.PostRepository;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
+import java.util.NoSuchElementException;
+
 @Service
 public class CommentService {
     private CommentRepository commentRepo;
@@ -20,17 +22,16 @@ public class CommentService {
     }
 
     @PreAuthorize("permitAll()")
-    public void addComment(Long postId, CommentCreateDto newComment) {
-        Post post = postRepo.findById(postId).orElseThrow();
-
+    public CommentItemDto addComment(Long postId, CommentCreateDto dto) {
+        Post post = postRepo.findById(postId).orElseThrow(NoSuchElementException::new);
         Comment comment = new Comment();
-
-        comment.setName(newComment.name());
-        comment.setEmail(newComment.email());
-        comment.setComment(newComment.text());
+        comment.setName(dto.name());
+        comment.setEmail(dto.email());
+        comment.setComment(dto.text());
         comment.setPost(post);
+        Comment saved = commentRepo.save(comment);
+        return new CommentItemDto(saved.getId(), saved.getName(), saved.getEmail(), saved.getComment(), saved.getCreatedAt());
 
-        commentRepo.save(comment);
     }
 
     public CommentItemDto getComment(Long commentId) {
@@ -46,12 +47,17 @@ public class CommentService {
     }
 
     @PreAuthorize("hasRole('ADMIN') or @postSecurity.isOwnerByComment(#commentId, authentication)")
-    public void editComment(Long commentId, CommentItemDto newComment) {
+    public CommentItemDto editComment(Long commentId, CommentCreateDto newComment) {
         Comment comment = commentRepo.findById(commentId).orElseThrow();
         comment.setComment(newComment.text());
         comment.setName(newComment.name());
         comment.setEmail(newComment.email());
-        commentRepo.save(comment);
+        Comment saved = commentRepo.save(comment);
+        return new CommentItemDto(saved.getId(),
+                saved.getName(),
+                saved.getEmail(),
+                saved.getComment(),
+                saved.getCreatedAt());
     }
 
     @PreAuthorize("hasRole('ADMIN') or @postSecurity.isOwnerByComment(#commentId, authentication)")

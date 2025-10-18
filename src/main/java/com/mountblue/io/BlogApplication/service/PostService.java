@@ -4,6 +4,7 @@ import com.mountblue.io.BlogApplication.config.UserPrincipal;
 import com.mountblue.io.BlogApplication.dto.CommentItemDto;
 import com.mountblue.io.BlogApplication.dto.PostCreateDto;
 import com.mountblue.io.BlogApplication.dto.PostDetailDto;
+import com.mountblue.io.BlogApplication.dto.UserDetailDto;
 import com.mountblue.io.BlogApplication.entities.Post;
 import com.mountblue.io.BlogApplication.entities.Tag;
 import com.mountblue.io.BlogApplication.entities.User;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class PostService {
@@ -28,14 +30,12 @@ public class PostService {
         this.userRepo = userRepo;
     }
 
-    public void savePost(PostCreateDto postCreateDto, UserPrincipal currentUser, Long authorId) {
+    public PostDetailDto savePost(PostCreateDto dto, UserPrincipal currentUser, Long authorId) {
         Post post = new Post();
-        post.setTitle(postCreateDto.title());
-        post.setContent(postCreateDto.content());
-        post.setExcerpt(postCreateDto.content().substring(Math.min((200), postCreateDto.content().length())));
-        Set<Tag> tags = tagService.saveTags(postCreateDto.tag());
-        post.setTags(tags);
-
+        post.setTitle(dto.title());
+        post.setContent(dto.content());
+        post.setExcerpt(makeExcerpt(dto.content()));
+        post.setTags(tagService.saveTags(dto.tag()));
         boolean isAdmin = currentUser
                 .getAuthorities()
                 .stream()
@@ -49,93 +49,39 @@ public class PostService {
         }
         post.setUser(owner);
         post.setAuthor(owner.getName());
-
-        postRepo.save(post);
+        return toDetailDto(postRepo.save(post));
     }
 
     public void deletePost(Long postId) {
         postRepo.deleteById(postId);
     }
 
-    public Page<PostDetailDto> getPostList(Pageable pageable) {
-        return postRepo.findAll(pageable)
-                .map(p -> new PostDetailDto(
-                        p.getId(),
-                        p.getTitle(),
-                        p.getAuthor(),
-                        p.getExcerpt(),
-                        p.getContent(),
-                        p.getCreatedAt(),
-                        p.getTags().stream().map(t -> t.getName()).toList(),
-                        p.getComments().stream()
-                                .map(c -> new CommentItemDto(
-                                        c.getId(),
-                                        c.getName(),
-                                        c.getEmail(),
-                                        c.getComment(),
-                                        c.getCreatedAt()
-                                ))
-                                .toList(),
-                        p.getUser()
-                ));
-    }
 
     public PostDetailDto detail(Long id) {
-        Post p = postRepo.findById(id).orElseThrow();
-        return new PostDetailDto(
-                p.getId(),
-                p.getTitle(),
-                p.getAuthor(),
-                p.getExcerpt(),
-                p.getContent(),
-                p.getCreatedAt(),
-                p.getTags().stream().map(t -> t.getName()).toList(),
-                p.getComments().stream()
-                        .map(c -> new CommentItemDto(
-                                c.getId(),
-                                c.getName(),
-                                c.getEmail(),
-                                c.getComment(),
-                                c.getCreatedAt()
-                        ))
-                        .toList(),
-                p.getUser()
-        );
+        Post post = postRepo.findById(id).orElseThrow(NoSuchElementException::new);
+        return toDetailDto(post);
     }
 
-    public void editPost(Long id, PostDetailDto updatedPost, UserPrincipal currentUser, Long authorId) {
-        Post oldPost = postRepo.findById(id).orElseThrow();
+    public PostDetailDto editPost(Long id, PostDetailDto dto, UserPrincipal currentUser, Long authorId) {
+        Post post = postRepo.findById(id).orElseThrow(NoSuchElementException::new);
+        post.setTitle(dto.title());
+        post.setContent(dto.content());
+        post.setExcerpt(makeExcerpt(dto.content()));
 
-        boolean isAdmin = currentUser
-                .getAuthorities()
-                .stream()
-                .anyMatch(a ->
-                        a.getAuthority().equals("ROLE_ADMIN"));
-        User owner;
-        if (isAdmin && authorId != null) {
-            owner = userRepo.findById(authorId).orElseThrow();
-        } else {
-            owner = userRepo.getReferenceById(currentUser.getId());
-        }
-        oldPost.setAuthor(owner.getName());
-        oldPost.setTitle(updatedPost.title());
-        oldPost.setContent(updatedPost.content());
-        oldPost.setExcerpt(updatedPost.content().substring(0, 200));
-
-        String tagsAsString = String.join(",", updatedPost.tags());
-        Set<Tag> tags = tagService.saveTags(tagsAsString);
-        oldPost.setTags(tags);
-
-        postRepo.save(oldPost);
+        String tagsAsString = String.join(",", dto.tags());
+        post.setTags(tagService.saveTags(tagsAsString));
+        post.setUpdatedAt(LocalDateTime.now());
+        return toDetailDto(postRepo.save(post));
     }
+
 
     public Set<String> getAuthors() {
         List<Post> posts = postRepo.findAll();
         Set<String> authors = new LinkedHashSet<>();
         for (Post post : posts) {
-            String a = post.getAuthor();
-            if (a != null && !a.isBlank()) {
-                authors.add(a.trim());
+            String author = post.getAuthor();
+            if (author != null && !author.isBlank()) {
+                authors.add(author.trim());
             }
         }
         return authors;
@@ -143,53 +89,38 @@ public class PostService {
 
     public Page<PostDetailDto> searchWithFilter(
             String keyword,
-            List<String> selectedTags,
-            List<String> selectedAuthors,
+            List<String> tags,
+            List<String> authors,
             LocalDateTime from,
             LocalDateTime to,
             Pageable pageable
     ) {
-        boolean hasTags = selectedTags != null && !selectedTags.isEmpty();
-        boolean hasAuthor = selectedAuthors != null && !selectedAuthors.isEmpty();
-
-        List<String> tagsLower =
-                (selectedTags == null || selectedTags.isEmpty())
-                        ? List.of()
-                        : selectedTags.stream()
-                        .map(s -> s.toLowerCase())
-                        .toList();
-        List<String> authorsLower =
-                (selectedAuthors == null || selectedAuthors.isEmpty())
-                        ? List.of()
-                        : selectedAuthors.stream()
-                        .map(s -> s.toLowerCase())
-                        .toList();
-
+        boolean hasAuthors = authors != null && !authors.isEmpty();
+        boolean hasTags = tags != null && !tags.isEmpty();
+        List<String> authorsLower = hasAuthors ? authors.stream().map(String::toLowerCase).toList() : Collections.emptyList();
+        List<String> tagsLower = hasTags ? tags.stream().map(String::toLowerCase).toList() : Collections.emptyList();
         String k = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
 
-        return postRepo.searchAndFilter(k, hasAuthor, authorsLower, from, to, hasTags, tagsLower, pageable)
-                .map(p -> new PostDetailDto(
-                        p.getId(),
-                        p.getTitle(),
-                        p.getAuthor(),
-                        p.getExcerpt(),
-                        p.getContent(),
-                        p.getCreatedAt(),
-                        p.getTags().stream()
-                                .map(t ->
-                                        t.getName())
-                                .toList(),
-                        p.getComments()
-                                .stream()
-                                .map(c -> new CommentItemDto(
-                                        c.getId(),
-                                        c.getName(),
-                                        c.getEmail(),
-                                        c.getComment(),
-                                        c.getCreatedAt()
-                                ))
-                                .toList(),
-                        p.getUser()
-                ));
+        return postRepo.searchAndFilter(k, hasAuthors, authorsLower, from, to, hasTags, tagsLower, pageable)
+                .map(this::toDetailDto);
+    }
+
+    private String makeExcerpt(String content) {
+        if (content == null) return "";
+        int end = Math.min(200, content.length());
+        return content.substring(0, end);
+    }
+
+    private PostDetailDto toDetailDto(Post post) {
+        List<String> tagNames = post.getTags().stream().map(Tag::getName).collect(Collectors.toList());
+        List<CommentItemDto> comments = post.getComments().stream()
+                .sorted(Comparator.comparing(c -> c.getCreatedAt() == null ? LocalDateTime.MIN : c.getCreatedAt()))
+                .map(c -> new CommentItemDto(c.getId(), c.getName(), c.getEmail(), c.getComment(), c.getCreatedAt()))
+                .toList();
+        User user = post.getUser();
+        return new PostDetailDto(post.getId(), post.getTitle(), post.getAuthor(), post.getExcerpt(),
+                post.getContent(), post.getPublishedAt() != null ? post.getPublishedAt() : post.getCreatedAt(),
+                tagNames, comments,
+                new UserDetailDto(user.getId(), user.getName(), user.getEmail(), null));
     }
 }
