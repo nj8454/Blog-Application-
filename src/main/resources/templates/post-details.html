@@ -30,16 +30,17 @@
     Tags:
     <span th:text="${#strings.listJoin(post.tags, ', ')}">tag1, tag2</span>
 </div>
-<div th:if="${currentUserId != null and post.user != null and currentUserId == post.user.id}">
-    <form th:action="@{|/post/${post.id}/update|}" method="get" style="margin-top:12px;">
-        <button type="submit">Update</button>
-    </form>
-    <form th:action="@{|/post/${post.id}/delete|}" method="post" style="margin-top:12px;">
-        <button type="submit" onclick="return confirm('Delete this post?');">Delete</button>
-    </form>
+<div sec:authorize="!hasRole('ADMIN')">
+    <div th:if="${currentUserId != null and post.user != null and currentUserId == post.user.id}">
+        <form th:action="@{|/post/${post.id}/update|}" method="get" style="margin-top:12px;">
+            <button type="submit">Update</button>
+        </form>
+        <form th:action="@{|/post/${post.id}/delete|}" method="post" style="margin-top:12px;">
+            <button type="submit" onclick="return confirm('Delete this post?');">Delete</button>
+        </form>
+    </div>
 </div>
 
-<!-- Admin-only controls (optional, if admins should always see them) -->
 <div sec:authorize="hasRole('ADMIN')">
     <form th:action="@{|/post/${post.id}/update|}" method="get" style="margin-top:12px;">
         <button type="submit">Update</button>
@@ -72,13 +73,15 @@
             </form>
         </div>
 
-        <div th:if="${currentUserId != null and post.user != null and currentUserId == post.user.id}">
-            <form th:action="@{|/post/${post.id}/comments/${c.id}/edit|}" method="get" style="margin-top:12px;">
-                <button type="submit">edit</button>
-            </form>
-            <form th:action="@{|/post/${post.id}/comments/${c.id}/delete|}" method="post" style="margin-top:12px;">
-                <button type="submit">Delete</button>
-            </form>
+        <div sec:authorize="!hasRole('ADMIN')">
+            <div th:if="${currentUserId != null and post.user != null and currentUserId == post.user.id}">
+                <form th:action="@{|/post/${post.id}/comments/${c.id}/edit|}" method="get" style="margin-top:12px;">
+                    <button type="submit">edit</button>
+                </form>
+                <form th:action="@{|/post/${post.id}/comments/${c.id}/delete|}" method="post" style="margin-top:12px;">
+                    <button type="submit">Delete</button>
+                </form>
+            </div>
         </div>
     </div>
 </section>
